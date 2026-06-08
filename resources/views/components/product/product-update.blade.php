@@ -2,7 +2,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Update Product</h5>
+                <h5 class="modal-title" id="exampleModalLabel">Perbarui Produk Sembako</h5>
             </div>
             <div class="modal-body">
                 <form id="update-form">
@@ -11,23 +11,23 @@
                             <div class="col-12 p-1">
 
 
-                                <label class="form-label">Category</label>
+                                <label class="form-label">Kategori</label>
                                 <select type="text" class="form-control form-select" id="productCategoryUpdate">
-                                    <option value="">Select Category</option>
+                                    <option value="">Pilih Kategori</option>
                                 </select>
 
-                                <label class="form-label mt-2">Name</label>
+                                <label class="form-label mt-2">Nama Produk</label>
                                 <input type="text" class="form-control" id="productNameUpdate">
 
-                                <label class="form-label mt-2">Price</label>
+                                <label class="form-label mt-2">Harga</label>
                                 <input type="text" class="form-control" id="productPriceUpdate">
 
-                                <label class="form-label mt-2">Unit</label>
+                                <label class="form-label mt-2">Jumlah Stok</label>
                                 <input type="text" class="form-control" id="productUnitUpdate">
                                 <br/>
                                 <img class="w-15" id="oldImg" src="{{asset('images/default.jpg')}}"/>
                                 <br/>
-                                <label class="form-label mt-2">Image</label>
+                                <label class="form-label mt-2">Gambar</label>
                                 <input oninput="oldImg.src=window.URL.createObjectURL(this.files[0])"  type="file" class="form-control" id="productImgUpdate">
 
                                 <input type="text" class="d-none" id="updateID">
@@ -41,8 +41,8 @@
             </div>
 
             <div class="modal-footer">
-                <button id="update-modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Close</button>
-                <button onclick="update()" id="update-btn" class="btn bg-gradient-success" >Update</button>
+                <button id="update-modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Tutup</button>
+                <button onclick="update()" id="update-btn" class="btn bg-gradient-success" >Perbarui</button>
             </div>
 
         </div>
@@ -97,16 +97,16 @@
 
 
         if (productCategoryUpdate.length === 0) {
-            errorToast("Product Category Required !")
+            errorToast("Kategori produk wajib dipilih !")
         }
         else if(productNameUpdate.length===0){
-            errorToast("Product Name Required !")
+            errorToast("Nama produk wajib diisi !")
         }
         else if(productPriceUpdate.length===0){
-            errorToast("Product Price Required !")
+            errorToast("Harga produk wajib diisi !")
         }
         else if(productUnitUpdate.length===0){
-            errorToast("Product Unit Required !")
+            errorToast("Jumlah stok wajib diisi !")
         }
 
         else {
@@ -118,7 +118,7 @@
             formData.append('id',updateID)
             formData.append('name',productNameUpdate)
             formData.append('price',productPriceUpdate)
-            formData.append('unit',productNameUpdate)
+            formData.append('unit',productUnitUpdate)
             formData.append('category_id',productCategoryUpdate)
             formData.append('file_path',filePath)
 
@@ -133,12 +133,12 @@
             hideLoader();
 
             if(res.status===200 && res.data===1){
-                successToast('Request completed');
+                successToast('Data berhasil diperbarui');
                 document.getElementById("update-form").reset();
                 await getList();
             }
             else{
-                errorToast("Request fail !")
+                errorToast("Proses gagal !")
             }
         }
     }

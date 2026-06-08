@@ -4,10 +4,10 @@
         <div class="card px-5 py-5">
             <div class="row justify-content-between ">
                 <div class="align-items-center col">
-                    <h5>Invoices</h5>
+                    <h5>Transaksis</h5>
                 </div>
                 <div class="align-items-center col">
-                    <a    href="{{url("/salePage")}}" class="float-end btn m-0 bg-gradient-primary">Create Sale</a>
+                    <a    href="{{url("/salePage")}}" class="float-end btn m-0 bg-gradient-primary">Buat Transaksi</a>
                 </div>
             </div>
             <hr class="bg-dark "/>
@@ -15,13 +15,13 @@
                 <thead>
                 <tr class="bg-light">
                     <th>No</th>
-                    <th>Name</th>
-                    <th>Phone</th>
+                    <th>Nama</th>
+                    <th>Nomor HP</th>
                     <th>Total</th>
-                    <th>Vat</th>
-                    <th>Discount</th>
-                    <th>Payable</th>
-                    <th>Action</th>
+                    <th>PPN</th>
+                    <th>Diskon</th>
+                    <th>Total Bayar</th>
+                    <th>Aksi</th>
                 </tr>
                 </thead>
                 <tbody id="tableList">
@@ -69,7 +69,7 @@ async function getList() {
     $('.viewBtn').on('click', async function () {
         let id= $(this).data('id');
         let cus= $(this).data('cus');
-        await InvoiceDetails(cus,id)
+        await TransaksiDetails(cus,id)
     })
 
     $('.deleteBtn').on('click',function () {
@@ -87,4 +87,3 @@ async function getList() {
 
 
 </script>
-

@@ -3,19 +3,19 @@
         <div class="col-md-7 animated fadeIn col-lg-6 center-screen">
             <div class="card w-90  p-4">
                 <div class="card-body">
-                    <h4>SIGN IN</h4>
+                    <h4>MASUK</h4>
                     <br/>
-                    <input id="email" placeholder="User Email" class="form-control" type="email"/>
+                    <input id="email" placeholder="Email Pengguna" class="form-control" type="email"/>
                     <br/>
-                    <input id="password" placeholder="User Password" class="form-control" type="password"/>
+                    <input id="password" placeholder="Kata Sandi" class="form-control" type="password"/>
                     <br/>
-                    <button onclick="SubmitLogin()" class="btn w-100 bg-gradient-primary">Next</button>
+                    <button onclick="SubmitLogin()" class="btn w-100 bg-gradient-primary">Masuk</button>
                     <hr/>
                     <div class="float-end mt-3">
                         <span>
-                            <a class="text-center ms-3 h6" href="{{url('/userRegistration')}}">Sign Up </a>
+                            <a class="text-center ms-3 h6" href="{{url('/userRegistration')}}">Daftar </a>
                             <span class="ms-1">|</span>
-                            <a class="text-center ms-3 h6" href="{{url('/sendOtp')}}">Forget Password</a>
+                            <a class="text-center ms-3 h6" href="{{url('/sendOtp')}}">Lupa Password</a>
                         </span>
                     </div>
                 </div>
@@ -32,10 +32,10 @@
             let password=document.getElementById('password').value;
 
             if(email.length === 0){
-                errorToast("Email is required");
+                errorToast("Email wajib diisi");
             }
             else if(password.length===0){
-                errorToast("Password is required");
+                errorToast("Kata sandi wajib diisi");
             }
             else{
                 showLoader();

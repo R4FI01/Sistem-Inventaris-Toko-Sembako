@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="id" data-bs-theme="light">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
-    <title></title>
+    <title>Sistem Inventaris Toko Sembako</title>
 
     <link rel="icon" type="image/x-icon" href="{{asset('/favicon.ico')}}" />
     <link href="{{asset('css/bootstrap.css')}}" rel="stylesheet" />
@@ -55,14 +55,14 @@
                 <div class="user-dropdown-content ">
                     <div class="mt-4 text-center">
                         <img class="icon-nav-img" src="{{asset('images/user.webp')}}" alt=""/>
-                        <h6>User Name</h6>
+                        <h6>Pengguna</h6>
                         <hr class="user-dropdown-divider  p-0"/>
                     </div>
                     <a href="{{url('/userProfile')}}" class="side-bar-item">
-                        <span class="side-bar-item-caption">Profile</span>
+                        <span class="side-bar-item-caption">Profil</span>
                     </a>
                     <a href="{{url("/user-logout")}}" class="side-bar-item">
-                        <span class="side-bar-item-caption">Logout</span>
+                        <span class="side-bar-item-caption">Keluar</span>
                     </a>
                 </div>
             </div>
@@ -80,32 +80,32 @@
 
     <a href="{{url("/customerPage")}}" class="side-bar-item">
         <i class="bi bi-people"></i>
-        <span class="side-bar-item-caption">Customer</span>
+        <span class="side-bar-item-caption">Pelanggan</span>
     </a>
 
     <a href="{{url("/categoryPage")}}" class="side-bar-item">
         <i class="bi bi-list-nested"></i>
-        <span class="side-bar-item-caption">Category</span>
+        <span class="side-bar-item-caption">Kategori</span>
     </a>
 
     <a href="{{url("/productPage")}}" class="side-bar-item">
         <i class="bi bi-bag"></i>
-        <span class="side-bar-item-caption">Product</span>
+        <span class="side-bar-item-caption">Produk Sembako</span>
     </a>
 
     <a href="{{url('/salePage')}}" class="side-bar-item">
-        <i class="bi bi-currency-dollar"></i>
-        <span class="side-bar-item-caption">Create Sale</span>
+        <i class="bi bi-cart-check"></i>
+        <span class="side-bar-item-caption">Buat Transaksi</span>
     </a>
 
     <a href="{{url('/invoicePage')}}" class="side-bar-item">
         <i class="bi bi-receipt"></i>
-        <span class="side-bar-item-caption">Invoice</span>
+        <span class="side-bar-item-caption">Daftar Transaksi</span>
     </a>
 
     <a href="{{url('/reportPage')}}" class="side-bar-item">
         <i class="bi bi-file-earmark-bar-graph"></i>
-        <span class="side-bar-item-caption">Report</span>
+        <span class="side-bar-item-caption">Laporan</span>
     </a>
 
 

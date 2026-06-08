@@ -3,15 +3,15 @@
         <div class="col-md-7 col-lg-6 center-screen">
             <div class="card animated fadeIn w-90 p-4">
                 <div class="card-body">
-                    <h4>SET NEW PASSWORD</h4>
+                    <h4>ATUR KATA SANDI BARU</h4>
                     <br/>
-                    <label>New Password</label>
-                    <input id="password" placeholder="New Password" class="form-control" type="password"/>
+                    <label>Kata Sandi Baru</label>
+                    <input id="password" placeholder="Kata Sandi Baru" class="form-control" type="password"/>
                     <br/>
-                    <label>Confirm Password</label>
-                    <input id="cpassword" placeholder="Confirm Password" class="form-control" type="password"/>
+                    <label>Konfirmasi Kata Sandi</label>
+                    <input id="cpassword" placeholder="Konfirmasi Kata Sandi" class="form-control" type="password"/>
                     <br/>
-                    <button onclick="ResetPass()" class="btn w-100 bg-gradient-primary">Next</button>
+                    <button onclick="ResetPass()" class="btn w-100 bg-gradient-primary">Simpan</button>
                 </div>
             </div>
         </div>
@@ -24,13 +24,13 @@
         let cpassword = document.getElementById('cpassword').value;
 
         if(password.length===0){
-            errorToast('Password is required')
+            errorToast('Kata sandi wajib diisi')
         }
         else if(cpassword.length===0){
-            errorToast('Confirm Password is required')
+            errorToast('Konfirmasi kata sandi wajib diisi')
         }
         else if(password!==cpassword){
-            errorToast('Password and Confirm Password must be same')
+            errorToast('Kata sandi dan konfirmasi harus sama')
         }
         else{
           showLoader()

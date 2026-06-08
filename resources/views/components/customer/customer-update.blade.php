@@ -2,20 +2,20 @@
     <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Update Customer</h5>
+                <h5 class="modal-title" id="exampleModalLabel">Perbarui Pelanggan</h5>
             </div>
             <div class="modal-body">
                 <form id="update-form">
                     <div class="container">
                         <div class="row">
                             <div class="col-12 p-1">
-                                <label class="form-label">Customer Name *</label>
+                                <label class="form-label">Nama Pelanggan *</label>
                                 <input type="text" class="form-control" id="customerNameUpdate">
 
-                                <label class="form-label mt-3">Customer Email *</label>
+                                <label class="form-label mt-3">Email Pelanggan *</label>
                                 <input type="text" class="form-control" id="customerEmailUpdate">
 
-                                <label class="form-label mt-3">Customer Mobile *</label>
+                                <label class="form-label mt-3">Nomor HP Pelanggan *</label>
                                 <input type="text" class="form-control" id="customerMobileUpdate">
 
                                 <input type="text" class="d-none" id="updateID">
@@ -25,8 +25,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button id="update-modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Close</button>
-                <button onclick="Update()" id="update-btn" class="btn bg-gradient-success" >Update</button>
+                <button id="update-modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Tutup</button>
+                <button onclick="Update()" id="update-btn" class="btn bg-gradient-success" >Perbarui</button>
             </div>
         </div>
     </div>
@@ -57,13 +57,13 @@
 
 
         if (customerName.length === 0) {
-            errorToast("Customer Name Required !")
+            errorToast("Nama pelanggan wajib diisi !")
         }
         else if(customerEmail.length===0){
-            errorToast("Customer Email Required !")
+            errorToast("Email pelanggan wajib diisi !")
         }
         else if(customerMobile.length===0){
-            errorToast("Customer Mobile Required !")
+            errorToast("Nomor HP pelanggan wajib diisi !")
         }
         else {
 
@@ -84,7 +84,7 @@
                 await getList();
             }
             else{
-                errorToast("Request fail !")
+                errorToast("Proses gagal !")
             }
         }
     }

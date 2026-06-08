@@ -5,12 +5,12 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <h4>Sales Report</h4>
-                        <label class="form-label mt-2">Date From</label>
+                        <h4>Laporan Penjualan</h4>
+                        <label class="form-label mt-2">Tanggal Awal</label>
                         <input id="FormDate" type="date" class="form-control"/>
-                        <label class="form-label mt-2">Date To</label>
+                        <label class="form-label mt-2">Tanggal Akhir</label>
                         <input id="ToDate" type="date" class="form-control"/>
-                        <button onclick="SalesReport()" class="btn mt-3 bg-gradient-primary">Download</button>
+                        <button onclick="SalesReport()" class="btn mt-3 bg-gradient-primary">Unduh</button>
                     </div>
                 </div>
             </div>
@@ -26,7 +26,7 @@
         let ToDate = document.getElementById('ToDate').value;
 
         if(FormDate.length === 0 || ToDate.length === 0){
-            errorToast("Date Range Required !")
+            errorToast("Rentang tanggal wajib diisi !")
         }else{
             window.open('/sales-report/'+FormDate+'/'+ToDate);
         }

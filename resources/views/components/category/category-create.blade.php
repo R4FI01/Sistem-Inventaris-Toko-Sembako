@@ -2,14 +2,14 @@
     <div class="modal-dialog modal-dialog-centered modal-md">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h6 class="modal-title" id="exampleModalLabel">Create Category</h6>
+                    <h6 class="modal-title" id="exampleModalLabel">Tambah Kategori</h6>
                 </div>
                 <div class="modal-body">
                     <form id="save-form">
                     <div class="container">
                         <div class="row">
                             <div class="col-12 p-1">
-                                <label class="form-label">Category Name *</label>
+                                <label class="form-label">Nama Kategori *</label>
                                 <input type="text" class="form-control" id="categoryName">
                             </div>
                         </div>
@@ -17,8 +17,8 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button id="modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Close</button>
-                    <button onclick="Save()" id="save-btn" class="btn bg-gradient-success" >Save</button>
+                    <button id="modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Tutup</button>
+                    <button onclick="Save()" id="save-btn" class="btn bg-gradient-success" >Simpan</button>
                 </div>
             </div>
     </div>
@@ -29,7 +29,7 @@
     async function Save() {
         let categoryName = document.getElementById('categoryName').value;
         if (categoryName.length === 0) {
-            errorToast("Category Required !")
+            errorToast("Nama kategori wajib diisi !")
         }
         else {
             document.getElementById('modal-close').click();
@@ -37,12 +37,12 @@
             let res = await axios.post("/create-category",{name:categoryName})
             hideLoader();
             if(res.status===201){
-                successToast('Request completed');
+                successToast('Data berhasil disimpan');
                 document.getElementById("save-form").reset();
                 await getList();
             }
             else{
-                errorToast("Request fail !")
+                errorToast("Proses gagal !")
             }
         }
     }

@@ -2,14 +2,14 @@
     <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Update Category</h5>
+                <h5 class="modal-title" id="exampleModalLabel">Perbarui Kategori</h5>
             </div>
             <div class="modal-body">
                 <form id="update-form">
                     <div class="container">
                         <div class="row">
                             <div class="col-12 p-1">
-                                <label class="form-label">Category Name *</label>
+                                <label class="form-label">Nama Kategori *</label>
                                 <input type="text" class="form-control" id="categoryNameUpdate">
                                 <input class="d-none" id="updateID">
                             </div>
@@ -18,8 +18,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button id="update-modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Close</button>
-                <button onclick="Update()" id="update-btn" class="btn bg-gradient-success" >Update</button>
+                <button id="update-modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Tutup</button>
+                <button onclick="Update()" id="update-btn" class="btn bg-gradient-success" >Perbarui</button>
             </div>
         </div>
     </div>
@@ -43,7 +43,7 @@
         let updateID = document.getElementById('updateID').value;
 
         if (categoryName.length === 0) {
-            errorToast("Category Required !")
+            errorToast("Nama kategori wajib diisi !")
         }
         else{
             document.getElementById('update-modal-close').click();
@@ -53,11 +53,11 @@
 
             if(res.status===200 && res.data===1){
                 document.getElementById("update-form").reset();
-                successToast("Request success !")
+                successToast("Data berhasil diperbarui !")
                 await getList();
             }
             else{
-                errorToast("Request fail !")
+                errorToast("Proses gagal !")
             }
 
 

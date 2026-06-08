@@ -2,18 +2,18 @@
     <div class="modal-dialog modal-md modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Create Customer</h5>
+                    <h5 class="modal-title" id="exampleModalLabel">Tambah Pelanggan</h5>
                 </div>
                 <div class="modal-body">
                     <form id="save-form">
                     <div class="container">
                         <div class="row">
                             <div class="col-12 p-1">
-                                <label class="form-label">Customer Name *</label>
+                                <label class="form-label">Nama Pelanggan *</label>
                                 <input type="text" class="form-control" id="customerName">
-                                <label class="form-label">Customer Email *</label>
+                                <label class="form-label">Email Pelanggan *</label>
                                 <input type="text" class="form-control" id="customerEmail">
-                                <label class="form-label">Customer Mobile *</label>
+                                <label class="form-label">Nomor HP Pelanggan *</label>
                                 <input type="text" class="form-control" id="customerMobile">
                             </div>
                         </div>
@@ -21,8 +21,8 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button id="modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Close</button>
-                    <button onclick="Save()" id="save-btn" class="btn bg-gradient-success" >Save</button>
+                    <button id="modal-close" class="btn bg-gradient-primary" data-bs-dismiss="modal" aria-label="Close">Tutup</button>
+                    <button onclick="Save()" id="save-btn" class="btn bg-gradient-success" >Simpan</button>
                 </div>
             </div>
     </div>
@@ -38,13 +38,13 @@
         let customerMobile = document.getElementById('customerMobile').value;
 
         if (customerName.length === 0) {
-            errorToast("Customer Name Required !")
+            errorToast("Nama pelanggan wajib diisi !")
         }
         else if(customerEmail.length===0){
-            errorToast("Customer Email Required !")
+            errorToast("Email pelanggan wajib diisi !")
         }
         else if(customerMobile.length===0){
-            errorToast("Customer Mobile Required !")
+            errorToast("Nomor HP pelanggan wajib diisi !")
         }
         else {
 
@@ -56,14 +56,14 @@
 
             if(res.status===201){
 
-                successToast('Request completed');
+                successToast('Data berhasil disimpan');
 
                 document.getElementById("save-form").reset();
 
                 await getList();
             }
             else{
-                errorToast("Request fail !")
+                errorToast("Proses gagal !")
             }
         }
     }

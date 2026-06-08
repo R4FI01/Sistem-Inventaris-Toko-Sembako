@@ -29,44 +29,44 @@
 </head>
 <body>
 
-<h3>Summary</h3>
+<h3>Ringkasan</h3>
 
 <table class="customers" >
     <thead>
     <tr>
-        <th>Report</th>
-        <th>Date</th>
+        <th>Laporan</th>
+        <th>Tanggal</th>
         <th>Total</th>
-        <th>Discount</th>
-        <th>Vat</th>
-        <th>Payable</th>
+        <th>Diskon</th>
+        <th>PPN</th>
+        <th>Total Bayar</th>
     </tr>
     </thead>
     <tbody>
     <tr>
-        <td>Sales Report</td>
-        <td>{{$FormDate}} to {{$ToDate}}</td>
-        <td>{{$total}}</td>
-        <td>{{$discount}}</td>
-        <td>{{$vat}}</td>
-        <td>{{$payable}} </td>
+        <td>Sales Laporan</td>
+        <td>{{$FormTanggal}} to {{$ToTanggal}}</td>
+        <td>Rp {{$total}}</td>
+        <td>Rp {{$discount}}</td>
+        <td>Rp {{$vat}}</td>
+        <td>Rp {{$payable}} </td>
     </tr>
     </tbody>
 </table>
 
 
-<h3>Details</h3>
+<h3>Rincian</h3>
 <table class="customers" >
     <thead>
     <tr>
-        <th>Customer</th>
-        <th>Phone</th>
+        <th>Pelanggan</th>
+        <th>Nomor HP</th>
         <th>Email</th>
         <th>Total</th>
-        <th>Discount</th>
-        <th>Vat</th>
-        <th>Payable</th>
-        <th>Date</th>
+        <th>Diskon</th>
+        <th>PPN</th>
+        <th>Total Bayar</th>
+        <th>Tanggal</th>
     </tr>
     </thead>
     <tbody>
@@ -75,10 +75,10 @@
             <td>{{$item->customer->name}}</td>
             <td>{{$item->customer->mobile}}</td>
             <td>{{$item->customer->email}}</td>
-            <td>{{$item->total }}</td>
-            <td>{{$item->discount }}</td>
-            <td>{{$item->vat }}</td>
-            <td>{{$item->payable }}</td>
+            <td>Rp {{$item->total }}</td>
+            <td>Rp {{$item->discount }}</td>
+            <td>Rp {{$item->vat }}</td>
+            <td>Rp {{$item->payable }}</td>
             <td>{{$item->created_at }}</td>
         </tr>
     @endforeach
@@ -87,7 +87,3 @@
 </table>
 </body>
 </html>
-
-
-
-

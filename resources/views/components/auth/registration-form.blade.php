@@ -3,34 +3,34 @@
         <div class="col-md-10 col-lg-10 center-screen">
             <div class="card animated fadeIn w-100 p-3">
                 <div class="card-body">
-                    <h4>Sign Up</h4>
+                    <h4>Daftar Akun</h4>
                     <hr/>
                     <div class="container-fluid m-0 p-0">
                         <div class="row m-0 p-0">
                             <div class="col-md-4 p-2">
-                                <label>Email Address</label>
-                                <input id="email" placeholder="User Email" class="form-control" type="email"/>
+                                <label>Alamat Email</label>
+                                <input id="email" placeholder="Email Pengguna" class="form-control" type="email"/>
                             </div>
                             <div class="col-md-4 p-2">
-                                <label>First Name</label>
-                                <input id="firstName" placeholder="First Name" class="form-control" type="text"/>
+                                <label>Nama Depan</label>
+                                <input id="firstName" placeholder="Nama Depan" class="form-control" type="text"/>
                             </div>
                             <div class="col-md-4 p-2">
-                                <label>Last Name</label>
-                                <input id="lastName" placeholder="Last Name" class="form-control" type="text"/>
+                                <label>Nama Belakang</label>
+                                <input id="lastName" placeholder="Nama Belakang" class="form-control" type="text"/>
                             </div>
                             <div class="col-md-4 p-2">
-                                <label>Mobile Number</label>
-                                <input id="mobile" placeholder="Mobile" class="form-control" type="mobile"/>
+                                <label>Nomor HP</label>
+                                <input id="mobile" placeholder="Nomor HP" class="form-control" type="mobile"/>
                             </div>
                             <div class="col-md-4 p-2">
                                 <label>Password</label>
-                                <input id="password" placeholder="User Password" class="form-control" type="password"/>
+                                <input id="password" placeholder="Kata Sandi" class="form-control" type="password"/>
                             </div>
                         </div>
                         <div class="row m-0 p-0">
                             <div class="col-md-4 p-2">
-                                <button onclick="onRegistration()" class="btn mt-3 w-100  bg-gradient-primary">Complete</button>
+                                <button onclick="onRegistration()" class="btn mt-3 w-100  bg-gradient-primary">Daftar</button>
                             </div>
                         </div>
                     </div>
@@ -52,19 +52,19 @@
         let password = document.getElementById('password').value;
 
         if(email.length===0){
-            errorToast('Email is required')
+            errorToast('Email wajib diisi')
         }
         else if(firstName.length===0){
-            errorToast('First Name is required')
+            errorToast('Nama depan wajib diisi')
         }
         else if(lastName.length===0){
-            errorToast('Last Name is required')
+            errorToast('Nama belakang wajib diisi')
         }
         else if(mobile.length===0){
-            errorToast('Mobile is required')
+            errorToast('Nomor HP wajib diisi')
         }
         else if(password.length===0){
-            errorToast('Password is required')
+            errorToast('Kata sandi wajib diisi')
         }
         else{
             showLoader();

@@ -4,21 +4,21 @@
         <div class="card px-5 py-5">
             <div class="row justify-content-between ">
                 <div class="align-items-center col">
-                    <h4>Product</h4>
+                    <h4>Produk Sembako</h4>
                 </div>
                 <div class="align-items-center col">
-                    <button data-bs-toggle="modal" data-bs-target="#create-modal" class="float-end btn m-0  bg-gradient-primary">Create</button>
+                    <button data-bs-toggle="modal" data-bs-target="#create-modal" class="float-end btn m-0  bg-gradient-primary">Tambah</button>
                 </div>
             </div>
             <hr class="bg-dark "/>
             <table class="table" id="tableData">
                 <thead>
                 <tr class="bg-light">
-                    <th>Image</th>
-                    <th>Name</th>
-                    <th>Price</th>
-                    <th>Unit</th>
-                    <th>Action</th>
+                    <th>Gambar</th>
+                    <th>Nama Produk</th>
+                    <th>Harga</th>
+                    <th>Jumlah Stok</th>
+                    <th>Aksi</th>
                 </tr>
                 </thead>
                 <tbody id="tableList">
@@ -55,7 +55,7 @@ async function getList() {
                     <td>${item['unit']}</td>
                     <td>
                         <button data-path="${item['img_url']}" data-id="${item['id']}" class="btn editBtn btn-sm btn-outline-success">Edit</button>
-                        <button data-path="${item['img_url']}" data-id="${item['id']}" class="btn deleteBtn btn-sm btn-outline-danger">Delete</button>
+                        <button data-path="${item['img_url']}" data-id="${item['id']}" class="btn deleteBtn btn-sm btn-outline-danger">Hapus</button>
                     </td>
                  </tr>`
         tableList.append(row)
@@ -87,4 +87,3 @@ async function getList() {
 
 
 </script>
-

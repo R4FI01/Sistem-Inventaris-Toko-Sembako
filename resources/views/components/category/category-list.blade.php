@@ -4,10 +4,10 @@
         <div class="card px-5 py-5">
             <div class="row justify-content-between ">
                 <div class="align-items-center col">
-                    <h4>Category</h4>
+                    <h4>Kategori Barang</h4>
                 </div>
                 <div class="align-items-center col">
-                    <button data-bs-toggle="modal" data-bs-target="#create-modal" class="float-end btn m-0 bg-gradient-primary">Create</button>
+                    <button data-bs-toggle="modal" data-bs-target="#create-modal" class="float-end btn m-0 bg-gradient-primary">Tambah</button>
                 </div>
             </div>
             <hr class="bg-secondary"/>
@@ -16,8 +16,8 @@
                 <thead>
                 <tr class="bg-light">
                     <th>No</th>
-                    <th>Category</th>
-                    <th>Action</th>
+                    <th>Kategori</th>
+                    <th>Aksi</th>
                 </tr>
                 </thead>
                 <tbody id="tableList">
@@ -54,7 +54,7 @@ async function getList() {
                     <td>${item['name']}</td>
                     <td>
                         <button data-id="${item['id']}" class="btn editBtn btn-sm btn-outline-success">Edit</button>
-                        <button data-id="${item['id']}" class="btn deleteBtn btn-sm btn-outline-danger">Delete</button>
+                        <button data-id="${item['id']}" class="btn deleteBtn btn-sm btn-outline-danger">Hapus</button>
                     </td>
                  </tr>`
         tableList.append(row)
@@ -83,4 +83,3 @@ async function getList() {
 
 
 </script>
-
