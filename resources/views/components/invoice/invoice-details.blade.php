@@ -69,13 +69,19 @@
         let res=await axios.post("/invoice-details",{cus_id:cus_id,inv_id:inv_id})
         hideLoader();
 
+        function formatRupiahRoundToThousands(value){
+            let num = Number(value) || 0;
+            let rounded = Math.round(num/1000)*1000;
+            return rounded.toLocaleString('id-ID', {minimumFractionDigits:0, maximumFractionDigits:0});
+        }
+
         document.getElementById('CNama').innerText=res.data['customer']['name']
         document.getElementById('CId').innerText=res.data['customer']['user_id']
         document.getElementById('CEmail').innerText=res.data['customer']['email']
-        document.getElementById('total').innerText=res.data['invoice']['total']
-        document.getElementById('payable').innerText=res.data['invoice']['payable']
-        document.getElementById('vat').innerText=res.data['invoice']['vat']
-        document.getElementById('discount').innerText=res.data['invoice']['discount']
+        document.getElementById('total').innerText=formatRupiahRoundToThousands(res.data['invoice']['total'])
+        document.getElementById('payable').innerText=formatRupiahRoundToThousands(res.data['invoice']['payable'])
+        document.getElementById('vat').innerText=formatRupiahRoundToThousands(res.data['invoice']['vat'])
+        document.getElementById('discount').innerText=formatRupiahRoundToThousands(res.data['invoice']['discount'])
 
 
         let invoiceList=$('#invoiceList');
@@ -86,7 +92,7 @@
             let row=`<tr class="text-xs">
                         <td>${item['product']['name']}</td>
                         <td>${item['qty']}</td>
-                        <td>${item['sale_price']}</td>
+                        <td>${formatRupiahRoundToThousands(item['sale_price'])}</td>
                      </tr>`
             invoiceList.append(row)
         });

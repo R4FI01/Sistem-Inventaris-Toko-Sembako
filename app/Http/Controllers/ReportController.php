@@ -26,15 +26,16 @@ class ReportController extends Controller
 
         $data=[
             'payable'=> $payable,
-            'discount'=>$discount, 
-            'total'=> $total, 
-            'vat'=> $vat, 
+            'discount'=>$discount,
+            'total'=> $total,
+            'vat'=> $vat,
             'list'=>$list,
-            'FormDate'=>$request->FormDate,
-            'ToDate'=>$request->FormDate
+            // pass variables expected by the blade view (FormTanggal / ToTanggal)
+            'FormTanggal' => $request->FormDate,
+            'ToTanggal' => $request->ToDate,
         ];
-        
-        $pdf = Pdf::loadView('report.SalesReport',$data);
+
+        $pdf = Pdf::loadView('report.SalesReport', $data);
         return $pdf->download('invoice.pdf');
 
     }

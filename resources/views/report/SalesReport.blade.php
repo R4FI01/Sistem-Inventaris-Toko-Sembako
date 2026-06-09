@@ -46,10 +46,10 @@
     <tr>
         <td>Sales Laporan</td>
         <td>{{$FormTanggal}} to {{$ToTanggal}}</td>
-        <td>Rp {{$total}}</td>
-        <td>Rp {{$discount}}</td>
-        <td>Rp {{$vat}}</td>
-        <td>Rp {{$payable}} </td>
+        <td>Rp {{ number_format($total,2,',','.') }}</td>
+        <td>Rp {{ number_format($discount,2,',','.') }}</td>
+        <td>Rp {{ number_format($vat,2,',','.') }}</td>
+        <td>Rp {{ number_format($payable,2,',','.') }} </td>
     </tr>
     </tbody>
 </table>
@@ -75,10 +75,10 @@
             <td>{{$item->customer->name}}</td>
             <td>{{$item->customer->mobile}}</td>
             <td>{{$item->customer->email}}</td>
-            <td>Rp {{$item->total }}</td>
-            <td>Rp {{$item->discount }}</td>
-            <td>Rp {{$item->vat }}</td>
-            <td>Rp {{$item->payable }}</td>
+            <td>Rp {{ number_format($item->total,2,',','.') }}</td>
+            <td>Rp {{ number_format($item->discount,2,',','.') }}</td>
+            <td>Rp {{ number_format($item->vat,2,',','.') }}</td>
+            <td>Rp {{ number_format($item->payable,2,',','.') }}</td>
             <td>{{$item->created_at }}</td>
         </tr>
     @endforeach
