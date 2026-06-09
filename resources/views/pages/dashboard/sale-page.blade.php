@@ -139,6 +139,17 @@
 
 
         let InvoiceItemList=[];
+        // global numeric totals for invoice creation
+        window.GrandTotals = {total:0,vat:0,discount:0,payable:0};
+
+        function formatRupiah(value){
+            if(value===null || value===undefined || value==='') return '0';
+            let num = Number(String(value).toString().replace(/[^0-9.-]+/g, ''));
+            if(isNaN(num)) num = 0;
+            // round to nearest thousand
+            let rounded = Math.round(num/1000)*1000;
+            return rounded.toLocaleString('id-ID', {minimumFractionDigits:0, maximumFractionDigits:0});
+        }
 
 
         function ShowInvoiceItem() {
@@ -151,7 +162,7 @@
                 let row=`<tr class="text-xs">
                         <td>${item['product_name']}</td>
                         <td>${item['qty']}</td>
-                        <td>${item['sale_price']}</td>
+                        <td>${formatRupiah(item['sale_price'])}</td>
                         <td><a data-index="${index}" class="btn remove text-xxs px-2 py-1  btn-sm m-0">Hapus</a></td>
                      </tr>`
                 invoiceList.append(row)
@@ -198,11 +209,19 @@
 
              Payable=(parseFloat(Total)+parseFloat(Vat)).toFixed(2);
 
+            // numeric totals for sending to server
+            const TotalNum = parseFloat(Total) || 0;
+            const VatNum = parseFloat(Vat) || 0;
+            const DiscountNum = parseFloat(Discount) || 0;
+            const PayableNum = parseFloat(Payable) || 0;
 
-            document.getElementById('total').innerText=Total;
-            document.getElementById('payable').innerText=Payable;
-            document.getElementById('vat').innerText=Vat;
-            document.getElementById('discount').innerText=Discount;
+            window.GrandTotals = {total:TotalNum, vat:VatNum, discount:DiscountNum, payable:PayableNum};
+
+            // display formatted values (Rupiah style)
+            document.getElementById('total').innerText=formatRupiah(TotalNum);
+            document.getElementById('payable').innerText=formatRupiah(PayableNum);
+            document.getElementById('vat').innerText=formatRupiah(VatNum);
+            document.getElementById('discount').innerText=formatRupiah(DiscountNum);
         }
 
 
@@ -290,7 +309,7 @@
 
             res.data.forEach(function (item,index) {
                 let row=`<tr class="text-xs">
-                        <td> <img class="w-10" src="${item['img_url']}"/> ${item['name']} (Rp ${item['price']})</td>
+                        <td> <img class="w-10" src="${item['img_url']}"/> ${item['name']} (Rp ${formatRupiah(item['price'])})</td>
                         <td><a data-name="${item['name']}" data-price="${item['price']}" data-id="${item['id']}" class="btn btn-outline-dark text-xxs px-2 py-1 addProduct  btn-sm m-0">Pilih</a></td>
                      </tr>`
                 productList.append(row)
@@ -316,12 +335,11 @@
 
 
       async  function createInvoice() {
-            let total=document.getElementById('total').innerText;
-            let discount=document.getElementById('discount').innerText
-            let vat=document.getElementById('vat').innerText
-            let payable=document.getElementById('payable').innerText
+            let total=window.GrandTotals.total;
+            let discount=window.GrandTotals.discount;
+            let vat=window.GrandTotals.vat;
+            let payable=window.GrandTotals.payable;
             let CId=document.getElementById('CId').innerText;
-
 
             let Data={
                 "total":total,
@@ -331,7 +349,6 @@
                 "customer_id":CId,
                 "products":InvoiceItemList
             }
-
 
             if(CId.length===0){
                 errorToast("Pelanggan wajib dipilih !")

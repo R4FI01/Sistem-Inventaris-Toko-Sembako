@@ -15,9 +15,10 @@ class CustomerController extends Controller
 
     function CustomerCreate(Request $request){
         $user_id=$request->header('id');
+        // omit email input from create; save empty string if not provided
         return Customer::create([
             'name'=>$request->input('name'),
-            'email'=>$request->input('email'),
+            'email'=>$request->input('email') ?? '',
             'mobile'=>$request->input('mobile'),
             'user_id'=>$user_id
         ]);

@@ -170,13 +170,20 @@
         showLoader();
         let res=await axios.get("/summary");
 
+        function formatRupiahRoundToThousands(value){
+            let num = Number(value) || 0;
+            // round to nearest thousand
+            let rounded = Math.round(num/1000)*1000;
+            return rounded.toLocaleString('id-ID', {minimumFractionDigits:0, maximumFractionDigits:0});
+        }
+
         document.getElementById('product').innerText=res.data['product']
         document.getElementById('category').innerText=res.data['category']
         document.getElementById('customer').innerText=res.data['customer']
         document.getElementById('invoice').innerText=res.data['invoice']
-        document.getElementById('total').innerText=res.data['total']
-        document.getElementById('vat').innerText=res.data['vat']
-        document.getElementById('payable').innerText=res.data['payable']
+        document.getElementById('total').innerText=formatRupiahRoundToThousands(res.data['total'])
+        document.getElementById('vat').innerText=formatRupiahRoundToThousands(res.data['vat'])
+        document.getElementById('payable').innerText=formatRupiahRoundToThousands(res.data['payable'])
 
 
         hideLoader();
