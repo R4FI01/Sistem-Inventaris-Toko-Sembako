@@ -6,201 +6,281 @@ use App\Models\User;
 use App\Mail\OTPMail;
 use App\Helper\JWTToken;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
-
-    function LoginPage():View{
+    function LoginPage(): View
+    {
         return view('pages.auth.login-page');
     }
 
-    function RegistrationPage():View{
+    function RegistrationPage(): View
+    {
         return view('pages.auth.registration-page');
     }
-    function SendOtpPage():View{
+
+    function SendOtpPage(): View
+    {
         return view('pages.auth.send-otp-page');
     }
-    function VerifyOTPPage():View{
+
+    function VerifyOTPPage(): View
+    {
         return view('pages.auth.verify-otp-page');
     }
 
-    function ResetPasswordPage():View{
+    function ResetPasswordPage(): View
+    {
         return view('pages.auth.reset-pass-page');
     }
 
-    function ProfilePage():View{
+    function ProfilePage(): View
+    {
         return view('pages.dashboard.profile-page');
     }
 
+    private function isPasswordHash($password): bool
+    {
+        if (!is_string($password) || $password === '') {
+            return false;
+        }
 
+        return str_starts_with($password, '$2y$') ||
+            str_starts_with($password, '$2a$') ||
+            str_starts_with($password, '$2b$') ||
+            str_starts_with($password, '$argon2i$') ||
+            str_starts_with($password, '$argon2id$');
+    }
 
-    //User Registration
-    public function userRegistration(Request $request){
+    public function userRegistration(Request $request)
+    {
+        try {
+            if (User::where('email', $request->email)->exists()) {
+                return response()->json([
+                    'status' => 'fail',
+                    'message' => 'Email sudah terdaftar'
+                ], 200);
+            }
 
-        try{
             User::create([
                 'first_name' => $request->firstName,
                 'last_name' => $request->lastName,
                 'email' => $request->email,
-                'password' => $request->password,
+                'password' => Hash::make($request->password),
                 'mobile' => $request->mobile,
             ]);
-    
+
             return response()->json([
                 'status' => 'success',
-                'message' => 'User Registration Successful'
+                'message' => 'Registrasi akun berhasil'
             ], 200);
-            
-        }catch(\Exception $e){
+        } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'fail',
-                'message' => 'User Registration Failed'
-            ], 200);
-        }
-        
-    }
-
-    //User Login
-    public function userLogin(Request $request){
-        //         $validator = Validator::make($request->all(), [
-        //             'first_name' => 'required|max:255',
-        //             'last_name' => 'required|max:255',
-        //             'email' => 'required',
-        //             'is_active' => 'required'
-        //    ]);
-        // if ($validator->fails()) {
-        //     return response()->json(['errors'=>$validator->errors()],422);
-        // }
-        $count = User::where(['email' => $request->email, 'password' => $request->password])->select('id')->first();
-
-        if($count !== null){
-            // User Login and Issue JWT Token
-            $token = JWTToken::createToken($request->input('email'), $count->id);
-            return response()->json([
-                'status' => 'success',
-                'message' => 'User Login Successful'
-            ], 200)->cookie('token', $token, time()+60 * 24 * 30);
-        }else{
-            return response()->json([
-                'status' => 'fail',
-                'message' => 'User Login Failed'
+                'message' => 'Registrasi akun gagal'
             ], 200);
         }
     }
 
-    //Send OTP
-    public function sendOTP(Request $request){
-        $email = $request->email;
-        $otp = rand(1000, 9999);
-        $count = User::where('email', $email)->count();
+    public function userLogin(Request $request)
+    {
+        try {
+            $email = $request->input('email');
+            $inputPassword = (string) $request->input('password');
 
-        if($count == 1){
-            //Send OTP to Email Address
-            Mail::to($email)->send(new OTPMail($otp));
-            //Save OTP in DB
-            User::where('email', $email)->update(['otp' => $otp]);
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 'fail',
+                    'message' => 'Email atau kata sandi salah'
+                ], 200);
+            }
+
+            $storedPassword = (string) $user->password;
+            $passwordValid = false;
+
+            if ($this->isPasswordHash($storedPassword)) {
+                if (Hash::check($inputPassword, $storedPassword)) {
+                    $passwordValid = true;
+                }
+            } else {
+                if (hash_equals($storedPassword, $inputPassword)) {
+                    $passwordValid = true;
+
+                    User::where('id', $user->id)->update([
+                        'password' => Hash::make($inputPassword)
+                    ]);
+
+                    $user->password = Hash::make($inputPassword);
+                }
+            }
+
+            if (!$passwordValid) {
+                return response()->json([
+                    'status' => 'fail',
+                    'message' => 'Email atau kata sandi salah'
+                ], 200);
+            }
+
+            $token = JWTToken::createToken($user->email, $user->id);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'OTP sent successfully'
+                'message' => 'Login berhasil'
+            ], 200)->cookie('token', $token, 60 * 24 * 30);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'fail',
+                'message' => 'Terjadi kesalahan saat login'
             ], 200);
-        }else{
+        }
+    }
+
+    public function sendOTP(Request $request)
+    {
+        try {
+            $email = $request->email;
+            $otp = rand(1000, 9999);
+            $count = User::where('email', $email)->count();
+
+            if ($count == 1) {
+                Mail::to($email)->send(new OTPMail($otp));
+
+                User::where('email', $email)->update([
+                    'otp' => $otp
+                ]);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'OTP berhasil dikirim'
+                ], 200);
+            } else {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Email tidak ditemukan'
+                ], 200);
+            }
+        } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'failed',
-                'message' => 'unable to send OTP'
+                'message' => 'Gagal mengirim OTP'
             ], 200);
         }
-
-       
     }
 
-    //Verify OTP
-    public function verifyOTP(Request $request){
+    public function verifyOTP(Request $request)
+    {
         $email = $request->email;
         $otp = $request->otp;
-        $count = User::where(['email' => $email, 'otp' => $otp])->count();
 
-        if($count == 1){
-            // Update OTP in DB
-            User::where('email', $email)->update(['otp' => 0]);
-            //Password Reset Token
+        $count = User::where([
+            'email' => $email,
+            'otp' => $otp
+        ])->count();
+
+        if ($count == 1) {
+            User::where('email', $email)->update([
+                'otp' => 0
+            ]);
+
             $token = JWTToken::createTokenForSetPassword($email);
+
             return response()->json([
                 'status' => 'success',
-                'message' => 'OTP verified successfully',
-            ], 200)->cookie('token', $token, 500);
-        }else{
+                'message' => 'OTP berhasil diverifikasi',
+            ], 200)->cookie('token', $token, 5);
+        } else {
             return response()->json([
                 'status' => 'failed',
-                'message' => 'OTP verification failed'
+                'message' => 'OTP salah atau tidak valid'
             ], 200);
         }
     }
 
-    //Reset Password
-    public function resetPassword(Request $request){
-        try{
+    public function resetPassword(Request $request)
+    {
+        try {
             $email = $request->header('email');
-            $password = $request->password;
-            //Update Password
-            User::where('email', $email)->update(['password' => $password]);
+
+            User::where('email', $email)->update([
+                'password' => Hash::make($request->password)
+            ]);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Password Reset successful'
+                'message' => 'Password berhasil direset'
             ], 200);
-
-        }catch(\Exception $e){
+        } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'fail',
-                'message' => 'Password Reset Failed'
+                'message' => 'Password gagal direset'
             ], 200);
         }
     }
 
-    // User Logout
     public function userlogout(Request $request)
     {
         return redirect('/userLogin')->cookie('token', null, -1);
     }
 
-    //get user profile
-    function UserProfile(Request $request){
-        $email=$request->header('email');
-        $user=User::where('email','=',$email)->first();
+    function UserProfile(Request $request)
+    {
+        $email = $request->header('email');
+
+        $user = User::where('email', $email)->first();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Request Successful',
             'data' => $user
-        ],200);
+        ], 200);
     }
 
-    //update user profile
-    function UpdateProfile(Request $request){
-        try{
-            $email=$request->header('email');
-            $firstName=$request->input('first_name');
-            $lastName=$request->input('last_name');
-            $mobile=$request->input('mobile');
-            $password=$request->input('password');
-            User::where('email','=',$email)->update([
-                'first_name'=>$firstName,
-                'last_name'=>$lastName,
-                'mobile'=>$mobile,
-                'password'=>$password
-            ]);
+    function UpdateProfile(Request $request)
+    {
+        try {
+            $email = $request->header('email');
+
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 'fail',
+                    'message' => 'User tidak ditemukan',
+                ], 200);
+            }
+
+            $data = [
+                'first_name' => $request->input('first_name'),
+                'last_name' => $request->input('last_name'),
+                'mobile' => $request->input('mobile'),
+            ];
+
+            $newPassword = $request->input('password');
+
+            if (!empty($newPassword)) {
+                $data['password'] = Hash::make($newPassword);
+            } else {
+                if (!$this->isPasswordHash($user->password)) {
+                    $data['password'] = Hash::make($user->password);
+                }
+            }
+
+            $user->update($data);
+
             return response()->json([
                 'status' => 'success',
-                'message' => 'Request Successful',
-            ],200);
-
-        }catch (\Exception $exception){
+                'message' => 'Profil berhasil diperbarui',
+            ], 200);
+        } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'fail',
-                'message' => 'Something Went Wrong',
-            ],200);
+                'message' => 'Terjadi kesalahan saat memperbarui profil',
+            ], 200);
         }
     }
 }

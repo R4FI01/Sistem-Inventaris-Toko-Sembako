@@ -8,53 +8,64 @@ use Illuminate\View\View;
 
 class CustomerController extends Controller
 {
-
-    function CustomerPage():View{
+    function CustomerPage(): View
+    {
         return view('pages.dashboard.customer-page');
     }
 
-    function CustomerCreate(Request $request){
-        $user_id=$request->header('id');
-        // omit email input from create; save empty string if not provided
+    function CustomerCreate(Request $request)
+    {
+        $user_id = $request->header('id');
+
         return Customer::create([
-            'name'=>$request->input('name'),
-            'email'=>$request->input('email') ?? '',
-            'mobile'=>$request->input('mobile'),
-            'user_id'=>$user_id
+            'name' => $request->input('name'),
+            'email' => '',
+            'mobile' => $request->input('mobile'),
+            'user_id' => $user_id
         ]);
     }
 
+    function CustomerList(Request $request)
+    {
+        $user_id = $request->header('id');
 
-    function CustomerList(Request $request){
-        $user_id=$request->header('id');
-        return Customer::where('user_id',$user_id)->get();
+        return Customer::where('user_id', $user_id)
+            ->select('id', 'name', 'mobile', 'user_id', 'created_at', 'updated_at')
+            ->get();
     }
 
+    function CustomerDelete(Request $request)
+    {
+        $customer_id = $request->input('id');
+        $user_id = $request->header('id');
 
-    function CustomerDelete(Request $request){
-        $customer_id=$request->input('id');
-        $user_id=$request->header('id');
-        return Customer::where('id',$customer_id)->where('user_id',$user_id)->delete();
+        return Customer::where('id', $customer_id)
+            ->where('user_id', $user_id)
+            ->delete();
     }
 
+    function CustomerByID(Request $request)
+    {
+        $customer_id = $request->input('id');
+        $user_id = $request->header('id');
 
-    function CustomerByID(Request $request){
-        $customer_id=$request->input('id');
-        $user_id=$request->header('id');
-        return Customer::where('id',$customer_id)->where('user_id',$user_id)->first();
+        return Customer::where('id', $customer_id)
+            ->where('user_id', $user_id)
+            ->select('id', 'name', 'mobile', 'user_id', 'created_at', 'updated_at')
+            ->first();
     }
 
+    function CustomerUpdate(Request $request)
+    {
+        $customer_id = $request->input('id');
+        $user_id = $request->header('id');
 
-     function CustomerUpdate(Request $request){
-        $customer_id=$request->input('id');
-        $user_id=$request->header('id');
-        return Customer::where('id',$customer_id)->where('user_id',$user_id)->update([
-            'name'=>$request->input('name'),
-            'email'=>$request->input('email'),
-            'mobile'=>$request->input('mobile'),
-        ]);
+        return Customer::where('id', $customer_id)
+            ->where('user_id', $user_id)
+            ->update([
+                'name' => $request->input('name'),
+                'mobile' => $request->input('mobile'),
+                'email' => ''
+            ]);
     }
-
-
-
 }

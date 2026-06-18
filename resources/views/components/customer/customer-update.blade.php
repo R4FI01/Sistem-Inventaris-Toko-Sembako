@@ -12,9 +12,6 @@
                                 <label class="form-label">Nama Pelanggan *</label>
                                 <input type="text" class="form-control" id="customerNameUpdate">
 
-                                <label class="form-label mt-3">Email Pelanggan *</label>
-                                <input type="text" class="form-control" id="customerEmailUpdate">
-
                                 <label class="form-label mt-3">Nomor HP Pelanggan *</label>
                                 <input type="text" class="form-control" id="customerMobileUpdate">
 
@@ -43,7 +40,6 @@
         let res=await axios.post("/customer-by-id",{id:id})
         hideLoader();
         document.getElementById('customerNameUpdate').value=res.data['name'];
-        document.getElementById('customerEmailUpdate').value=res.data['email'];
         document.getElementById('customerMobileUpdate').value=res.data['mobile'];
     }
 
@@ -51,16 +47,12 @@
     async function Update() {
 
         let customerName = document.getElementById('customerNameUpdate').value;
-        let customerEmail = document.getElementById('customerEmailUpdate').value;
         let customerMobile = document.getElementById('customerMobileUpdate').value;
         let updateID = document.getElementById('updateID').value;
 
 
         if (customerName.length === 0) {
             errorToast("Nama pelanggan wajib diisi !")
-        }
-        else if(customerEmail.length===0){
-            errorToast("Email pelanggan wajib diisi !")
         }
         else if(customerMobile.length===0){
             errorToast("Nomor HP pelanggan wajib diisi !")
@@ -71,13 +63,13 @@
 
             showLoader();
 
-            let res = await axios.post("/update-customer",{name:customerName,email:customerEmail,mobile:customerMobile,id:updateID})
+            let res = await axios.post("/update-customer",{name:customerName,mobile:customerMobile,id:updateID})
 
             hideLoader();
 
             if(res.status===200 && res.data===1){
 
-                successToast('Request completed');
+                successToast('Data berhasil diperbarui');
 
                 document.getElementById("update-form").reset();
 

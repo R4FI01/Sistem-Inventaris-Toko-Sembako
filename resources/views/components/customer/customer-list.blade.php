@@ -16,7 +16,6 @@
                 <tr class="bg-light">
                     <th>No</th>
                     <th>Nama Pelanggan</th>
-                    <th>Email</th>
                     <th>Nomor HP</th>
                     <th>Aksi</th>
                 </tr>
@@ -50,7 +49,6 @@ async function getList() {
         let row=`<tr>
                     <td>${index+1}</td>
                     <td>${item['name']}</td>
-                    <td>${item['email']}</td>
                     <td>${item['mobile']}</td>
                     <td>
                         <button data-id="${item['id']}" class="btn editBtn btn-sm btn-outline-success">Edit</button>
@@ -81,4 +79,3 @@ async function getList() {
 
 
 </script>
-

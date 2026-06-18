@@ -26,7 +26,18 @@
     <script src="{{asset('js/config.js')}}"></script>
     <script src="{{asset('js/bootstrap.bundle.js')}}"></script>
 
+    <script>
+        function formatRupiah(value) {
+        let number = Number(value) || 0;
 
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(number);
+        }
+    </script>
 
 
 </head>

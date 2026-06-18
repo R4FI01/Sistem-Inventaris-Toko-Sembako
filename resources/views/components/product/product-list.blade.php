@@ -51,7 +51,7 @@ async function getList() {
         let row=`<tr>
                     <td><img class="w-15 h-auto" alt="" src="${item['img_url']}"></td>
                     <td>${item['name']}</td>
-                    <td>${item['price']}</td>
+                    <td>${formatRupiah(item['price'])}</td>
                     <td>${item['unit']}</td>
                     <td>
                         <button data-path="${item['img_url']}" data-id="${item['id']}" class="btn editBtn btn-sm btn-outline-success">Edit</button>
