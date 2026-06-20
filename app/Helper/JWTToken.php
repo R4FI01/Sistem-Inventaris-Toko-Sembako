@@ -12,7 +12,7 @@ class JWTToken
         $payload = [
             'iss' => 'Laravel_Token',
             'iat' => time(),
-            'exp' => time() + 3600,
+            'exp' => time() + (60 * 60 * 24),
             'userEmail' => $userEmail,
             'userId' => $userId
         ];

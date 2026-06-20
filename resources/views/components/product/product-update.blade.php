@@ -114,7 +114,9 @@
             document.getElementById('update-modal-close').click();
 
             let formData=new FormData();
-            formData.append('img',productImgUpdate)
+            if (productImgUpdate) {
+                formData.append('img', productImgUpdate);
+            }
             formData.append('id',updateID)
             formData.append('name',productNameUpdate)
             formData.append('price',productPriceUpdate)
@@ -128,17 +130,31 @@
                 }
             }
 
-            showLoader();
-            let res = await axios.post("/update-product",formData,config)
-            hideLoader();
+            try {
+                showLoader();
 
-            if(res.status===200 && res.data===1){
-                successToast('Data berhasil diperbarui');
-                document.getElementById("update-form").reset();
-                await getList();
-            }
-            else{
-                errorToast("Proses gagal !")
+                let res = await axios.post("/update-product", formData, config);
+
+                hideLoader();
+
+                if (res.status === 200 && res.data === 1) {
+                    successToast('Data berhasil diperbarui');
+                    document.getElementById("update-form").reset();
+                    await getList();
+                } else {
+                    errorToast("Proses gagal !");
+                }
+
+            } catch (error) {
+                hideLoader();
+
+                if (error.response && error.response.status === 422) {
+                    let errors = error.response.data.errors;
+                    let firstError = Object.values(errors)[0][0];
+                    errorToast(firstError);
+                } else {
+                    errorToast("Terjadi kesalahan saat memperbarui produk.");
+                }
             }
         }
     }

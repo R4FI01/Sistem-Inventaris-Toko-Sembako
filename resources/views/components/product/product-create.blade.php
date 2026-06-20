@@ -101,17 +101,32 @@
                 }
             }
 
+            try {
             showLoader();
-            let res = await axios.post("/create-product",formData,config)
+
+            let res = await axios.post("/create-product", formData, config);
+
             hideLoader();
 
-            if(res.status===201){
+            if (res.status === 201) {
                 successToast('Data berhasil disimpan');
                 document.getElementById("save-form").reset();
+                document.getElementById("newImg").src = "{{asset('images/default.jpg')}}";
                 await getList();
+            } else {
+                errorToast("Proses gagal !");
             }
-            else{
-                errorToast("Proses gagal !")
+
+            } catch (error) {
+                hideLoader();
+
+                if (error.response && error.response.status === 422) {
+                    let errors = error.response.data.errors;
+                    let firstError = Object.values(errors)[0][0];
+                    errorToast(firstError);
+                } else {
+                    errorToast("Terjadi kesalahan saat menyimpan produk.");
+                }
             }
         }
     }

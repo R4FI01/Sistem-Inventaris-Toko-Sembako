@@ -131,7 +131,7 @@ class UserController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Login berhasil'
-            ], 200)->cookie('token', $token, 60 * 24 * 30);
+            ], 200)->cookie('token', $token, 60 * 24 );
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'fail',
