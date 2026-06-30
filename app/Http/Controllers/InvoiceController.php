@@ -161,6 +161,48 @@ class InvoiceController extends Controller
             ->get();
     }
 
+    function topCustomers(Request $request)
+    {
+        $user_id = $request->header('id');
+
+        return Customer::where('customers.user_id', $user_id)
+            ->join('invoices', 'customers.id', '=', 'invoices.customer_id')
+            ->where('invoices.user_id', $user_id)
+            ->select(
+                'customers.id',
+                'customers.name',
+                'customers.mobile',
+                DB::raw('COUNT(invoices.id) as total_transactions'),
+                DB::raw('COALESCE(SUM(invoices.payable), 0) as total_payable')
+            )
+            ->groupBy('customers.id', 'customers.name', 'customers.mobile')
+            ->orderByDesc('total_transactions')
+            ->orderByDesc('total_payable')
+            ->get();
+    }
+
+    function topProducts(Request $request)
+    {
+        $user_id = $request->header('id');
+
+        return Product::where('products.user_id', $user_id)
+            ->join('invoice_products', 'products.id', '=', 'invoice_products.product_id')
+            ->where('invoice_products.user_id', $user_id)
+            ->select(
+                'products.id',
+                'products.name',
+                'products.price',
+                'products.unit',
+                DB::raw('SUM(invoice_products.qty) as total_qty'),
+                DB::raw('COUNT(DISTINCT invoice_products.invoice_id) as total_transactions'),
+                DB::raw('COALESCE(SUM(invoice_products.sale_price), 0) as total_sales')
+            )
+            ->groupBy('products.id', 'products.name', 'products.price', 'products.unit')
+            ->orderByDesc('total_qty')
+            ->orderByDesc('total_sales')
+            ->get();
+    }
+
     function InvoiceDetails(Request $request)
     {
         $user_id = $request->header('id');

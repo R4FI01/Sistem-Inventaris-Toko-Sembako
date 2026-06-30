@@ -111,7 +111,7 @@
 
     <a href="{{url('/invoicePage')}}" class="side-bar-item">
         <i class="bi bi-receipt"></i>
-        <span class="side-bar-item-caption">Daftar Transaksi</span>
+        <span class="side-bar-item-caption">Daftar</span>
     </a>
 
     <a href="{{url('/reportPage')}}" class="side-bar-item">
