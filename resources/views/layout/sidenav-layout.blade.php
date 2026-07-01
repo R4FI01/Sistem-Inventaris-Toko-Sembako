@@ -101,7 +101,12 @@
 
     <a href="{{url("/productPage")}}" class="side-bar-item">
         <i class="bi bi-bag"></i>
-        <span class="side-bar-item-caption">Produk Sembako</span>
+        <span class="side-bar-item-caption">Produk</span>
+    </a>
+
+    <a href="{{url("/stockPage")}}" class="side-bar-item">
+        <i class="bi bi-box-seam"></i>
+        <span class="side-bar-item-caption">Stok & Riwayat</span>
     </a>
 
     <a href="{{url('/salePage')}}" class="side-bar-item">
@@ -111,7 +116,7 @@
 
     <a href="{{url('/invoicePage')}}" class="side-bar-item">
         <i class="bi bi-receipt"></i>
-        <span class="side-bar-item-caption">Daftar</span>
+        <span class="side-bar-item-caption">Daftar Transaksi</span>
     </a>
 
     <a href="{{url('/reportPage')}}" class="side-bar-item">

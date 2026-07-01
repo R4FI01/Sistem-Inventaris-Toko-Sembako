@@ -9,6 +9,8 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\UnitController;
 use App\Http\Middleware\TokenVerificationMiddleware;
 
 //Backend
@@ -35,6 +37,7 @@ Route::get('/userProfile',[UserController::class,'ProfilePage'])->middleware([To
 Route::get('/categoryPage',[CategoryController::class,'CategoryPage'])->middleware([TokenVerificationMiddleware::class]);
 Route::get('/customerPage',[CustomerController::class,'CustomerPage'])->middleware([TokenVerificationMiddleware::class]);
 Route::get('/productPage',[ProductController::class,'ProductPage'])->middleware([TokenVerificationMiddleware::class]);
+Route::get('/stockPage',[StockController::class,'StockPage'])->middleware([TokenVerificationMiddleware::class]);
 Route::get('/invoicePage',[InvoiceController::class,'InvoicePage'])->middleware([TokenVerificationMiddleware::class]);
 Route::get('/salePage',[InvoiceController::class,'SalePage'])->middleware([TokenVerificationMiddleware::class]);
 Route::get('/reportPage',[ReportController::class,'ReportPage'])->middleware([TokenVerificationMiddleware::class]);
@@ -62,6 +65,12 @@ Route::post("/delete-product",[ProductController::class,'DeleteProduct'])->middl
 Route::post("/update-product",[ProductController::class,'UpdateProduct'])->middleware([TokenVerificationMiddleware::class]);
 Route::get("/list-product",[ProductController::class,'ProductList'])->middleware([TokenVerificationMiddleware::class]);
 Route::post("/product-by-id",[ProductController::class,'ProductByID'])->middleware([TokenVerificationMiddleware::class]);
+
+// Unit & Stock API
+Route::get("/list-unit",[UnitController::class,'UnitList'])->middleware([TokenVerificationMiddleware::class]);
+Route::get("/product-stock-units",[StockController::class,'ProductStockUnits'])->middleware([TokenVerificationMiddleware::class]);
+Route::get("/stock-movements",[StockController::class,'StockMovementList'])->middleware([TokenVerificationMiddleware::class]);
+Route::post("/stock-movements",[StockController::class,'AddStockMovement'])->middleware([TokenVerificationMiddleware::class]);
 
 
 // Invoice

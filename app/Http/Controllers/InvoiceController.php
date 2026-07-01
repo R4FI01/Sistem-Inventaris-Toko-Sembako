@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceProduct;
 use App\Models\Product;
 use App\Models\ProductUnit;
+use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -150,6 +151,8 @@ class InvoiceController extends Controller
             $invoice->invoice_number = $this->generateInvoiceNumber($invoice->id);
             $invoice->save();
 
+            $runningStocks = [];
+
             foreach ($lineItems as $lineItem) {
                 InvoiceProduct::create([
                     'invoice_id' => $invoice->id,
@@ -162,11 +165,33 @@ class InvoiceController extends Controller
                     'unit_price' => $lineItem['unit_price'],
                     'sale_price' => $lineItem['sale_price'],
                 ]);
+
+                $productId = $lineItem['product_id'];
+                $product = $lockedProducts[$productId];
+                $stockBefore = $runningStocks[$productId] ?? round((float) $product->stock_base, 3);
+                $stockReduction = round((float) $lineItem['qty'] * (float) $lineItem['conversion_factor'], 3);
+                $stockAfter = round($stockBefore - $stockReduction, 3);
+
+                StockMovement::create([
+                    'product_id' => $product->id,
+                    'product_unit_id' => $lineItem['product_unit_id'],
+                    'user_id' => $userId,
+                    'movement_type' => 'sale',
+                    'unit_label' => $lineItem['unit_name'],
+                    'quantity_input' => $lineItem['qty'],
+                    'conversion_to_base' => $lineItem['conversion_factor'],
+                    'quantity_base' => -$stockReduction,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $stockAfter,
+                    'reference_number' => $invoice->invoice_number,
+                    'note' => 'Penjualan melalui transaksi ' . $invoice->invoice_number . '.',
+                ]);
+
+                $runningStocks[$productId] = $stockAfter;
             }
 
-            foreach ($stockRequirements as $productId => $requiredStock) {
+            foreach ($runningStocks as $productId => $remainingStock) {
                 $product = $lockedProducts[$productId];
-                $remainingStock = round((float) $product->stock_base - $requiredStock, 3);
 
                 $product->update([
                     'stock_base' => $remainingStock,

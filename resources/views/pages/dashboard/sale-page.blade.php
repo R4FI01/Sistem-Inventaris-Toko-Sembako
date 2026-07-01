@@ -142,6 +142,35 @@
             });
         }
 
+        function saleBaseUnit(product) {
+            const value = product?.['base_unit'];
+            if (value && typeof value === 'object') {
+                return value['symbol'] || value['name'] || product?.['inventory_unit']?.['symbol'] || 'pcs';
+            }
+            return value || product?.['inventory_unit']?.['symbol'] || 'pcs';
+        }
+
+        function operationalStockText(product) {
+            const stockBase = Number(product?.['stock_base'] ?? product?.['unit'] ?? 0);
+            const baseUnit = saleBaseUnit(product);
+            const stockUnits = product?.['stock_units'] || [];
+            const primaryUnit = stockUnits.find(unit => Boolean(unit['is_primary_receipt_unit'])) || stockUnits[0];
+
+            if (!primaryUnit || Number(primaryUnit['conversion_to_base']) <= 1) {
+                return `${displayQty(stockBase)} ${baseUnit}`;
+            }
+
+            const conversion = Number(primaryUnit['conversion_to_base']);
+            const packages = Math.floor((stockBase + 0.000001) / conversion);
+            const remainder = Number((stockBase - packages * conversion).toFixed(3));
+            const parts = [];
+
+            if (packages > 0) parts.push(`${displayQty(packages)} ${primaryUnit['label']}`);
+            if (remainder > 0.000001 || parts.length === 0) parts.push(`${displayQty(Math.max(remainder, 0))} ${baseUnit}`);
+
+            return `Setara ${parts.join(' + ')}`;
+        }
+
         function ShowInvoiceItem() {
             const invoiceList = $('#invoiceList');
             invoiceList.empty();
@@ -205,7 +234,7 @@
             const purchasableQty = conversionFactor > 0 ? stockBase / conversionFactor : 0;
 
             document.getElementById('PPrice').value = productUnit['selling_price'];
-            document.getElementById('PStock').value = `${displayQty(stockBase)} ${baseUnit}`;
+            document.getElementById('PStock').value = `${displayQty(stockBase)} ${baseUnit} • ${operationalStockText(ProductCatalog[document.getElementById('PId').value])}`;
             document.getElementById('PStockInfo').innerText = `Maksimal dapat dijual: ${displayQty(purchasableQty)} ${productUnit['unit_name']}.`;
         }
 
@@ -268,13 +297,13 @@
             document.getElementById('PId').value = product['id'];
             document.getElementById('PName').value = product['name'];
             document.getElementById('PStockBase').value = product['stock_base'] ?? product['unit'];
-            document.getElementById('PBaseUnit').value = product['base_unit'] || 'pcs';
+            document.getElementById('PBaseUnit').value = saleBaseUnit(product);
             document.getElementById('PQty').value = '';
 
             const unitSelect = $('#PUnit');
             unitSelect.empty();
             units.forEach(function (unit) {
-                unitSelect.append(`<option value="${unit['id']}">${unit['unit_name']} (${displayQty(unit['conversion_factor'])} ${product['base_unit'] || 'pcs'})</option>`);
+                unitSelect.append(`<option value="${unit['id']}">${unit['unit_name']} (${displayQty(unit['conversion_factor'])} ${saleBaseUnit(product)})</option>`);
             });
 
             changeSaleUnit();
@@ -326,7 +355,7 @@
 
             res.data.forEach(function (item) {
                 ProductCatalog[item['id']] = item;
-                const baseUnit = item['base_unit'] || 'pcs';
+                const baseUnit = saleBaseUnit(item);
                 const stockBase = item['stock_base'] ?? item['unit'];
                 const unitInfo = (item['units'] || [])
                     .map(unit => `${unit['unit_name']}: ${formatRupiah(unit['selling_price'])}`)
@@ -337,6 +366,7 @@
                         <img class="w-10" src="${item['img_url']}" alt="${item['name']}">
                         ${item['name']}<br>
                         <span class="badge bg-gradient-info">Stok: ${displayQty(stockBase)} ${baseUnit}</span>
+                        <div class="mt-1 text-muted">${operationalStockText(item)}</div>
                         <div class="mt-1 text-muted">${unitInfo}</div>
                     </td>
                     <td><a data-id="${item['id']}" class="btn btn-outline-dark text-xxs px-2 py-1 addProduct btn-sm m-0">Pilih</a></td>
