@@ -3,147 +3,323 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductUnit;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class ProductController extends Controller
 {
-    function ProductPage(): View
+    public function ProductPage(): View
     {
         return view('pages.dashboard.product-page');
     }
 
-    function CreateProduct(Request $request)
+    public function CreateProduct(Request $request)
     {
-        $user_id = $request->header('id');
+        $userId = (int) $request->header('id');
+        $data = $this->validateProductData($request, true);
+        $imageUrl = null;
 
-        $request->validate([
-            'category_id' => 'required',
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'unit' => 'required|integer|min:0',
-            'img' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048'
-        ], [
-            'category_id.required' => 'Kategori produk wajib dipilih.',
-            'name.required' => 'Nama produk wajib diisi.',
-            'price.required' => 'Harga produk wajib diisi.',
-            'price.numeric' => 'Harga produk harus berupa angka.',
-            'unit.required' => 'Jumlah stok wajib diisi.',
-            'unit.integer' => 'Jumlah stok harus berupa angka bulat.',
-            'img.required' => 'Gambar produk wajib diunggah.',
-            'img.image' => 'File harus berupa gambar.',
-            'img.mimes' => 'Format gambar harus jpg, jpeg, png, atau webp.',
-            'img.max' => 'Ukuran gambar maksimal 2 MB.'
-        ]);
+        DB::beginTransaction();
 
-        $img = $request->file('img');
+        try {
+            $imageUrl = $this->storeImage($request->file('img'), $userId);
 
-        $t = time();
-        $extension = $img->getClientOriginalExtension();
-        $img_name = "{$user_id}-{$t}." . $extension;
-        $img_url = "uploads/{$img_name}";
+            $product = Product::create([
+                'user_id' => $userId,
+                'category_id' => $data['category_id'],
+                'name' => $data['name'],
+                'price' => $data['base_unit_price'],
+                // Kolom lama tetap diisi sebagai salinan stok dasar agar data lama tidak rusak.
+                'unit' => (string) $data['stock_base'],
+                'base_unit' => $data['base_unit'],
+                'stock_base' => $data['stock_base'],
+                'img_url' => $imageUrl,
+            ]);
 
-        $img->move(public_path('uploads'), $img_name);
+            $this->syncProductUnits($product, $data['units']);
 
-        return Product::create([
-            'name' => $request->input('name'),
-            'price' => $request->input('price'),
-            'unit' => $request->input('unit'),
-            'img_url' => $img_url,
-            'category_id' => $request->input('category_id'),
-            'user_id' => $user_id
-        ]);
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Produk berhasil ditambahkan.',
+                'product' => $product->fresh('units'),
+            ], 201);
+        } catch (Throwable $exception) {
+            DB::rollBack();
+
+            if ($imageUrl && File::exists(public_path($imageUrl))) {
+                File::delete(public_path($imageUrl));
+            }
+
+            report($exception);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Produk gagal ditambahkan.',
+            ], 500);
+        }
     }
 
-    function DeleteProduct(Request $request)
+    public function DeleteProduct(Request $request)
     {
-        $user_id = $request->header('id');
-        $product_id = $request->input('id');
-        $filePath = $request->input('file_path');
+        $userId = (int) $request->header('id');
+        $productId = $request->input('id');
 
-        File::delete($filePath);
+        $product = Product::where('id', $productId)
+            ->where('user_id', $userId)
+            ->first();
 
-        return Product::where('id', $product_id)
-            ->where('user_id', $user_id)
-            ->delete();
+        if (!$product) {
+            return 0;
+        }
+
+        $imageUrl = $product->img_url;
+        $deleted = $product->delete();
+
+        if ($deleted && $imageUrl && File::exists(public_path($imageUrl))) {
+            File::delete(public_path($imageUrl));
+        }
+
+        return $deleted;
     }
 
-    function ProductByID(Request $request)
+    public function ProductByID(Request $request)
     {
-        $user_id = $request->header('id');
-        $product_id = $request->input('id');
+        $userId = (int) $request->header('id');
+        $productId = $request->input('id');
 
-        return Product::where('id', $product_id)
-            ->where('user_id', $user_id)
+        return Product::where('id', $productId)
+            ->where('user_id', $userId)
+            ->with('units')
             ->first();
     }
 
-    function ProductList(Request $request)
+    public function ProductList(Request $request)
     {
-        $user_id = $request->header('id');
+        $userId = (int) $request->header('id');
 
-        return Product::where('user_id', $user_id)->get();
+        return Product::where('user_id', $userId)
+            ->with('units')
+            ->orderByDesc('id')
+            ->get();
     }
 
-    function UpdateProduct(Request $request)
+    public function UpdateProduct(Request $request)
     {
-        $user_id = $request->header('id');
-        $product_id = $request->input('id');
+        $userId = (int) $request->header('id');
+        $productId = $request->input('id');
+        $data = $this->validateProductData($request, false);
 
-        $request->validate([
-            'id' => 'required',
-            'category_id' => 'required',
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'unit' => 'required|integer|min:0',
-            'img' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
-        ], [
-            'category_id.required' => 'Kategori produk wajib dipilih.',
-            'name.required' => 'Nama produk wajib diisi.',
-            'price.required' => 'Harga produk wajib diisi.',
-            'price.numeric' => 'Harga produk harus berupa angka.',
-            'unit.required' => 'Jumlah stok wajib diisi.',
-            'unit.integer' => 'Jumlah stok harus berupa angka bulat.',
-            'img.image' => 'File harus berupa gambar.',
-            'img.mimes' => 'Format gambar harus jpg, jpeg, png, atau webp.',
-            'img.max' => 'Ukuran gambar maksimal 2 MB.'
-        ]);
+        $product = Product::where('id', $productId)
+            ->where('user_id', $userId)
+            ->first();
 
-        if ($request->hasFile('img')) {
-            $img = $request->file('img');
-
-            $t = time();
-            $extension = $img->getClientOriginalExtension();
-            $img_name = "{$user_id}-{$t}." . $extension;
-            $img_url = "uploads/{$img_name}";
-
-            $img->move(public_path('uploads'), $img_name);
-
-            $filePath = $request->input('file_path');
-
-            if ($filePath && File::exists(public_path($filePath))) {
-                File::delete(public_path($filePath));
-            }
-
-            return Product::where('id', $product_id)
-                ->where('user_id', $user_id)
-                ->update([
-                    'name' => $request->input('name'),
-                    'price' => $request->input('price'),
-                    'unit' => $request->input('unit'),
-                    'img_url' => $img_url,
-                    'category_id' => $request->input('category_id')
-                ]);
+        if (!$product) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Produk tidak ditemukan.',
+            ], 404);
         }
 
-        return Product::where('id', $product_id)
-            ->where('user_id', $user_id)
-            ->update([
-                'name' => $request->input('name'),
-                'price' => $request->input('price'),
-                'unit' => $request->input('unit'),
-                'category_id' => $request->input('category_id')
+        $oldImageUrl = $product->img_url;
+        $newImageUrl = null;
+
+        DB::beginTransaction();
+
+        try {
+            if ($request->hasFile('img')) {
+                $newImageUrl = $this->storeImage($request->file('img'), $userId);
+            }
+
+            $product->update([
+                'category_id' => $data['category_id'],
+                'name' => $data['name'],
+                'price' => $data['base_unit_price'],
+                // Kolom lama tetap sinkron dengan stok dasar.
+                'unit' => (string) $data['stock_base'],
+                'base_unit' => $data['base_unit'],
+                'stock_base' => $data['stock_base'],
+                'img_url' => $newImageUrl ?: $oldImageUrl,
             ]);
+
+            $this->syncProductUnits($product, $data['units']);
+
+            DB::commit();
+
+            if ($newImageUrl && $oldImageUrl && File::exists(public_path($oldImageUrl))) {
+                File::delete(public_path($oldImageUrl));
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Produk berhasil diperbarui.',
+                'product' => $product->fresh('units'),
+            ]);
+        } catch (Throwable $exception) {
+            DB::rollBack();
+
+            if ($newImageUrl && File::exists(public_path($newImageUrl))) {
+                File::delete(public_path($newImageUrl));
+            }
+
+            report($exception);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Produk gagal diperbarui.',
+            ], 500);
+        }
+    }
+
+    private function validateProductData(Request $request, bool $imageRequired): array
+    {
+        $this->decodeUnits($request);
+
+        $rules = [
+            'category_id' => 'required|integer|exists:categories,id',
+            'name' => 'required|string|max:255',
+            'base_unit' => 'required|string|max:50',
+            'stock_base' => 'required|numeric|min:0',
+            'base_unit_price' => 'required|numeric|min:0',
+            'units' => 'nullable|array',
+            'units.*.unit_name' => 'required|string|max:50',
+            'units.*.conversion_factor' => 'required|numeric|gt:0',
+            'units.*.selling_price' => 'required|numeric|min:0',
+        ];
+
+        $rules['img'] = $imageRequired
+            ? 'required|image|mimes:jpg,jpeg,png,webp|max:2048'
+            : 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048';
+
+        $messages = [
+            'category_id.required' => 'Kategori produk wajib dipilih.',
+            'name.required' => 'Nama produk wajib diisi.',
+            'base_unit.required' => 'Satuan dasar wajib diisi.',
+            'stock_base.required' => 'Stok dasar wajib diisi.',
+            'stock_base.numeric' => 'Stok dasar harus berupa angka.',
+            'base_unit_price.required' => 'Harga satuan dasar wajib diisi.',
+            'base_unit_price.numeric' => 'Harga satuan dasar harus berupa angka.',
+            'units.*.unit_name.required' => 'Nama satuan jual wajib diisi.',
+            'units.*.conversion_factor.required' => 'Faktor konversi wajib diisi.',
+            'units.*.conversion_factor.gt' => 'Faktor konversi harus lebih besar dari 0.',
+            'units.*.selling_price.required' => 'Harga jual satuan wajib diisi.',
+            'img.required' => 'Gambar produk wajib diunggah.',
+            'img.image' => 'File harus berupa gambar.',
+            'img.mimes' => 'Format gambar harus jpg, jpeg, png, atau webp.',
+            'img.max' => 'Ukuran gambar maksimal 2 MB.',
+        ];
+
+        $data = $request->validate($rules, $messages);
+        $data['base_unit'] = trim($data['base_unit']);
+        $data['units'] = array_values($data['units'] ?? []);
+
+        foreach ($data['units'] as &$unit) {
+            $unit['unit_name'] = trim($unit['unit_name']);
+            $unit['conversion_factor'] = (float) $unit['conversion_factor'];
+            $unit['selling_price'] = (float) $unit['selling_price'];
+        }
+        unset($unit);
+
+        $this->ensureUnitNamesAreValid($data['base_unit'], $data['units']);
+
+        return $data;
+    }
+
+    private function decodeUnits(Request $request): void
+    {
+        $units = $request->input('units', []);
+
+        if ($units === null || $units === '') {
+            $request->merge(['units' => []]);
+            return;
+        }
+
+        if (is_string($units)) {
+            $decoded = json_decode($units, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+                throw ValidationException::withMessages([
+                    'units' => ['Daftar satuan jual tidak memiliki format yang valid.'],
+                ]);
+            }
+
+            $request->merge(['units' => $decoded]);
+        }
+    }
+
+    private function ensureUnitNamesAreValid(string $baseUnit, array $units): void
+    {
+        $baseUnitKey = strtolower($baseUnit);
+        $unitNames = [];
+
+        foreach ($units as $unit) {
+            $unitNameKey = strtolower($unit['unit_name']);
+
+            if ($unitNameKey === $baseUnitKey) {
+                throw ValidationException::withMessages([
+                    'units' => ['Satuan jual tambahan tidak boleh sama dengan satuan dasar.'],
+                ]);
+            }
+
+            if (in_array($unitNameKey, $unitNames, true)) {
+                throw ValidationException::withMessages([
+                    'units' => ['Nama satuan jual tidak boleh duplikat.'],
+                ]);
+            }
+
+            $unitNames[] = $unitNameKey;
+        }
+    }
+
+    private function syncProductUnits(Product $product, array $units): void
+    {
+        ProductUnit::updateOrCreate(
+            [
+                'product_id' => $product->id,
+                'is_default' => true,
+            ],
+            [
+                'unit_name' => $product->base_unit,
+                'conversion_factor' => 1,
+                'selling_price' => $product->price,
+            ]
+        );
+
+        // Riwayat transaksi aman karena invoice_products menyimpan snapshot satuan,
+        // faktor konversi, dan harga pada saat transaksi dibuat.
+        $product->units()
+            ->where('is_default', false)
+            ->delete();
+
+        foreach ($units as $unit) {
+            ProductUnit::create([
+                'product_id' => $product->id,
+                'unit_name' => $unit['unit_name'],
+                'conversion_factor' => $unit['conversion_factor'],
+                'selling_price' => $unit['selling_price'],
+                'is_default' => false,
+            ]);
+        }
+    }
+
+    private function storeImage(UploadedFile $image, int $userId): string
+    {
+        $directory = public_path('uploads');
+
+        if (!File::exists($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+
+        $fileName = $userId . '-' . time() . '-' . uniqid() . '.' . $image->getClientOriginalExtension();
+        $image->move($directory, $fileName);
+
+        return 'uploads/' . $fileName;
     }
 }

@@ -14,13 +14,11 @@
                         </select>
                     </div>
                     <div class="align-items-center col-md-4 col-sm-12">
-                        <a href="{{ url("/salePage") }}" class="float-end btn m-0 bg-gradient-primary">
-                            Buat Transaksi
-                        </a>
+                        <a href="{{ url('/salePage') }}" class="float-end btn m-0 bg-gradient-primary">Buat Transaksi</a>
                     </div>
                 </div>
 
-                <hr class="bg-dark"/>
+                <hr class="bg-dark">
 
                 <table class="table" id="tableData">
                     <thead id="tableHead"></thead>
@@ -38,43 +36,46 @@
         await getList();
     });
 
+    function listQty(value) {
+        return Number(value || 0).toLocaleString('id-ID', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 3
+        });
+    }
+
     async function getList() {
-        let listType = $('#listType').val();
+        const listType = $('#listType').val();
+        let url = '/invoice-select';
 
-        showLoader();
-
-        let url = "/invoice-select";
-
-        if (listType === "customers") {
-            url = "/top-customers";
-        } else if (listType === "products") {
-            url = "/top-products";
+        if (listType === 'customers') {
+            url = '/top-customers';
+        } else if (listType === 'products') {
+            url = '/top-products';
         }
 
-        let res = await axios.get(url);
-
+        showLoader();
+        const res = await axios.get(url);
         hideLoader();
 
         renderTable(listType, res.data);
     }
 
     function resetTable() {
-        let tableList = $("#tableList");
-        let tableData = $("#tableData");
+        const tableData = $('#tableData');
 
         if ($.fn.DataTable.isDataTable('#tableData')) {
             tableData.DataTable().destroy();
         }
 
-        tableList.empty();
+        $('#tableList').empty();
     }
 
     function renderTable(listType, data) {
         resetTable();
 
-        if (listType === "customers") {
+        if (listType === 'customers') {
             renderTopCustomers(data);
-        } else if (listType === "products") {
+        } else if (listType === 'products') {
             renderTopProducts(data);
         } else {
             renderTransactions(data);
@@ -87,9 +88,7 @@
     }
 
     function renderTransactions(data) {
-        let tableList = $("#tableList");
-
-        $("#tableHead").html(`
+        $('#tableHead').html(`
             <tr class="bg-light">
                 <th>No</th>
                 <th>No Transaksi</th>
@@ -101,69 +100,57 @@
                 <th>Total Bayar</th>
                 <th>Tanggal</th>
                 <th>Aksi</th>
-            </tr>
-        `);
+            </tr>`);
 
         data.forEach(function (item, index) {
-            let invoiceNumber = item['invoice_number'] || '-';
-            let customerName = item['customer'] ? item['customer']['name'] : '-';
-            let customerMobile = item['customer'] ? item['customer']['mobile'] : '-';
-            let customerId = item['customer'] ? item['customer']['id'] : '';
-            let createdAt = item['created_at'] ? item['created_at'].substring(0, 10) : '-';
+            const invoiceNumber = item['invoice_number'] || '-';
+            const customerName = item['customer'] ? item['customer']['name'] : '-';
+            const customerMobile = item['customer'] ? item['customer']['mobile'] : '-';
+            const customerId = item['customer'] ? item['customer']['id'] : '';
+            const createdAt = item['created_at'] ? item['created_at'].substring(0, 10) : '-';
 
-            let row = `<tr>
-                    <td>${index + 1}</td>
-                    <td><span class="badge bg-gradient-primary">${invoiceNumber}</span></td>
-                    <td>${customerName}</td>
-                    <td>${customerMobile}</td>
-                    <td>${formatRupiah(item['total'])}</td>
-                    <td>${formatRupiah(item['vat'])}</td>
-                    <td>${formatRupiah(item['discount'])}</td>
-                    <td>${formatRupiah(item['payable'])}</td>
-                    <td>${createdAt}</td>
-                    <td>
-                        <button data-id="${item['id']}" data-cus="${customerId}" class="viewBtn btn btn-outline-dark text-sm px-3 py-1 btn-sm m-0">
-                            <i class="fa text-sm fa-eye"></i>
-                        </button>
-                    </td>
-                 </tr>`
-
-            tableList.append(row)
-        })
+            $('#tableList').append(`<tr>
+                <td>${index + 1}</td>
+                <td><span class="badge bg-gradient-primary">${invoiceNumber}</span></td>
+                <td>${customerName}</td>
+                <td>${customerMobile}</td>
+                <td>${formatRupiah(item['total'])}</td>
+                <td>${formatRupiah(item['vat'])}</td>
+                <td>${formatRupiah(item['discount'])}</td>
+                <td>${formatRupiah(item['payable'])}</td>
+                <td>${createdAt}</td>
+                <td><button data-id="${item['id']}" data-cus="${customerId}" class="viewBtn btn btn-outline-dark text-sm px-3 py-1 btn-sm m-0"><i class="fa text-sm fa-eye"></i></button></td>
+            </tr>`);
+        });
 
         $('.viewBtn').on('click', async function () {
-            let id = $(this).data('id');
-            let cus = $(this).data('cus');
-            await TransaksiDetails(cus, id)
-        })
+            await TransaksiDetails($(this).data('cus'), $(this).data('id'));
+        });
     }
 
     function renderTopCustomers(data) {
-        $("#tableHead").html(`
+        $('#tableHead').html(`
             <tr class="bg-light">
                 <th>Peringkat</th>
                 <th>Nama Pelanggan</th>
                 <th>Nomor HP</th>
                 <th>Jumlah Transaksi</th>
                 <th>Total Belanja</th>
-            </tr>
-        `);
+            </tr>`);
 
         data.forEach(function (item, index) {
-            let row = `<tr>
-                    <td><span class="badge bg-gradient-primary">${index + 1}</span></td>
-                    <td>${item['name'] || '-'}</td>
-                    <td>${item['mobile'] || '-'}</td>
-                    <td>${item['total_transactions'] || 0}</td>
-                    <td>${formatRupiah(item['total_payable'])}</td>
-                 </tr>`
-
-            $("#tableList").append(row)
-        })
+            $('#tableList').append(`<tr>
+                <td><span class="badge bg-gradient-primary">${index + 1}</span></td>
+                <td>${item['name'] || '-'}</td>
+                <td>${item['mobile'] || '-'}</td>
+                <td>${item['total_transactions'] || 0}</td>
+                <td>${formatRupiah(item['total_payable'])}</td>
+            </tr>`);
+        });
     }
 
     function renderTopProducts(data) {
-        $("#tableHead").html(`
+        $('#tableHead').html(`
             <tr class="bg-light">
                 <th>Peringkat</th>
                 <th>Nama Produk</th>
@@ -171,23 +158,21 @@
                 <th>Jumlah Transaksi</th>
                 <th>Total Penjualan</th>
                 <th>Stok Saat Ini</th>
-            </tr>
-        `);
+            </tr>`);
 
         data.forEach(function (item, index) {
-            let stock = parseInt(item['unit']) || 0;
-            let stockBadge = stock <= 5 ? 'bg-gradient-danger' : 'bg-gradient-info';
+            const stock = Number(item['stock_base']) || 0;
+            const baseUnit = item['base_unit'] || 'pcs';
+            const stockBadge = stock <= 5 ? 'bg-gradient-danger' : 'bg-gradient-info';
 
-            let row = `<tr>
-                    <td><span class="badge bg-gradient-primary">${index + 1}</span></td>
-                    <td>${item['name'] || '-'}</td>
-                    <td>${item['total_qty'] || 0}</td>
-                    <td>${item['total_transactions'] || 0}</td>
-                    <td>${formatRupiah(item['total_sales'])}</td>
-                    <td><span class="badge ${stockBadge}">${stock}</span></td>
-                 </tr>`
-
-            $("#tableList").append(row)
-        })
+            $('#tableList').append(`<tr>
+                <td><span class="badge bg-gradient-primary">${index + 1}</span></td>
+                <td>${item['name'] || '-'}</td>
+                <td>${listQty(item['total_base_qty'])} ${baseUnit}</td>
+                <td>${item['total_transactions'] || 0}</td>
+                <td>${formatRupiah(item['total_sales'])}</td>
+                <td><span class="badge ${stockBadge}">${listQty(stock)} ${baseUnit}</span></td>
+            </tr>`);
+        });
     }
 </script>

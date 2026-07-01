@@ -6,102 +6,136 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceProduct;
 use App\Models\Product;
-use Exception;
+use App\Models\ProductUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use RuntimeException;
+use Throwable;
 
 class InvoiceController extends Controller
 {
-    function InvoicePage(): View
+    public function InvoicePage(): View
     {
         return view('pages.dashboard.invoice-page');
     }
 
-    function SalePage(): View
+    public function SalePage(): View
     {
         return view('pages.dashboard.sale-page');
     }
 
-    private function generateInvoiceNumber($invoiceID): string
+    private function generateInvoiceNumber(int $invoiceId): string
     {
-        return 'INV-' . date('Ymd') . '-' . str_pad($invoiceID, 6, '0', STR_PAD_LEFT);
+        return 'INV-' . date('Ymd') . '-' . str_pad((string) $invoiceId, 6, '0', STR_PAD_LEFT);
     }
 
-    function invoiceCreate(Request $request)
+    public function invoiceCreate(Request $request)
     {
+        $data = $request->validate([
+            'customer_id' => 'required|integer',
+            'discount_percentage' => 'nullable|numeric|min:0|max:100',
+            'products' => 'required|array|min:1',
+            'products.*.product_id' => 'required|integer',
+            'products.*.product_unit_id' => 'required|integer',
+            'products.*.qty' => 'required|numeric|gt:0',
+        ], [
+            'customer_id.required' => 'Pelanggan wajib dipilih.',
+            'products.required' => 'Produk wajib dipilih.',
+            'products.min' => 'Produk wajib dipilih.',
+            'products.*.product_unit_id.required' => 'Satuan jual wajib dipilih.',
+            'products.*.qty.gt' => 'Jumlah beli produk harus lebih dari 0.',
+        ]);
+
+        $userId = (int) $request->header('id');
+        $customer = Customer::where('id', $data['customer_id'])
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$customer) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pelanggan tidak ditemukan.',
+            ], 422);
+        }
+
         DB::beginTransaction();
 
         try {
-            $user_id = $request->header('id');
-            $total = $request->input('total');
-            $discount = $request->input('discount');
-            $vat = $request->input('vat');
-            $payable = $request->input('payable');
-            $customer_id = $request->input('customer_id');
-            $products = $request->input('products');
+            $lockedProducts = [];
+            $stockRequirements = [];
+            $lineItems = [];
 
-            if (!$customer_id) {
-                DB::rollBack();
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Pelanggan wajib dipilih.'
-                ]);
-            }
+            foreach ($data['products'] as $requestedProduct) {
+                $productId = (int) $requestedProduct['product_id'];
+                $productUnitId = (int) $requestedProduct['product_unit_id'];
+                $qty = round((float) $requestedProduct['qty'], 3);
 
-            if (!is_array($products) || count($products) === 0) {
-                DB::rollBack();
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Produk wajib dipilih.'
-                ]);
-            }
-
-            $requestedProducts = [];
-
-            foreach ($products as $EachProduct) {
-                $productId = $EachProduct['product_id'] ?? null;
-                $qty = (int)($EachProduct['qty'] ?? 0);
-
-                if (!$productId || $qty <= 0) {
-                    DB::rollBack();
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Jumlah beli produk harus lebih dari 0.'
-                    ]);
+                if (!isset($lockedProducts[$productId])) {
+                    $lockedProducts[$productId] = Product::where('id', $productId)
+                        ->where('user_id', $userId)
+                        ->lockForUpdate()
+                        ->first();
                 }
 
-                if (!isset($requestedProducts[$productId])) {
-                    $requestedProducts[$productId] = 0;
+                $product = $lockedProducts[$productId];
+
+                if (!$product) {
+                    throw new RuntimeException('Produk tidak ditemukan.');
                 }
 
-                $requestedProducts[$productId] += $qty;
-            }
-
-            foreach ($requestedProducts as $productId => $totalQty) {
-                $product = Product::where('id', $productId)
-                    ->where('user_id', $user_id)
+                $productUnit = ProductUnit::where('id', $productUnitId)
+                    ->where('product_id', $productId)
                     ->lockForUpdate()
                     ->first();
 
-                if (!$product) {
-                    DB::rollBack();
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Produk tidak ditemukan.'
-                    ]);
+                if (!$productUnit) {
+                    throw new RuntimeException('Satuan jual untuk produk ' . $product->name . ' tidak ditemukan.');
                 }
 
-                $currentStock = (int)$product->unit;
+                $conversionFactor = (float) $productUnit->conversion_factor;
+                $stockReduction = round($qty * $conversionFactor, 3);
+                $unitPrice = (float) $productUnit->selling_price;
+                $lineTotal = round($qty * $unitPrice, 2);
 
-                if ($currentStock < $totalQty) {
-                    DB::rollBack();
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Stok produk ' . $product->name . ' tidak mencukupi. Stok tersedia: ' . $currentStock . ', jumlah beli: ' . $totalQty . '.'
-                    ]);
+                if (!isset($stockRequirements[$productId])) {
+                    $stockRequirements[$productId] = 0;
+                }
+
+                $stockRequirements[$productId] = round(
+                    $stockRequirements[$productId] + $stockReduction,
+                    3
+                );
+
+                $lineItems[] = [
+                    'product_id' => $productId,
+                    'product_unit_id' => $productUnit->id,
+                    'qty' => $qty,
+                    'unit_name' => $productUnit->unit_name,
+                    'conversion_factor' => $conversionFactor,
+                    'unit_price' => $unitPrice,
+                    'sale_price' => $lineTotal,
+                ];
+            }
+
+            foreach ($stockRequirements as $productId => $requiredStock) {
+                $product = $lockedProducts[$productId];
+                $availableStock = (float) $product->stock_base;
+
+                if ($availableStock + 0.000001 < $requiredStock) {
+                    throw new RuntimeException(
+                        'Stok produk ' . $product->name . ' tidak mencukupi. '
+                        . 'Stok tersedia: ' . $this->formatQty($availableStock) . ' ' . $product->base_unit . '.'
+                    );
                 }
             }
+
+            $total = round(array_sum(array_column($lineItems, 'sale_price')), 2);
+            $discountPercentage = (float) ($data['discount_percentage'] ?? 0);
+            $discount = round($total * ($discountPercentage / 100), 2);
+            $taxBase = round($total - $discount, 2);
+            $vat = round($taxBase * 0.05, 2);
+            $payable = round($taxBase + $vat, 2);
 
             $invoice = Invoice::create([
                 'invoice_number' => null,
@@ -109,29 +143,36 @@ class InvoiceController extends Controller
                 'discount' => $discount,
                 'vat' => $vat,
                 'payable' => $payable,
-                'user_id' => $user_id,
-                'customer_id' => $customer_id,
+                'user_id' => $userId,
+                'customer_id' => $customer->id,
             ]);
 
-            $invoiceID = $invoice->id;
-
-            $invoice->invoice_number = $this->generateInvoiceNumber($invoiceID);
+            $invoice->invoice_number = $this->generateInvoiceNumber($invoice->id);
             $invoice->save();
 
-            foreach ($products as $EachProduct) {
-                $qty = (int)$EachProduct['qty'];
-
+            foreach ($lineItems as $lineItem) {
                 InvoiceProduct::create([
-                    'invoice_id' => $invoiceID,
-                    'user_id' => $user_id,
-                    'product_id' => $EachProduct['product_id'],
-                    'qty' => $qty,
-                    'sale_price' => $EachProduct['sale_price'],
+                    'invoice_id' => $invoice->id,
+                    'user_id' => $userId,
+                    'product_id' => $lineItem['product_id'],
+                    'product_unit_id' => $lineItem['product_unit_id'],
+                    'qty' => $lineItem['qty'],
+                    'unit_name' => $lineItem['unit_name'],
+                    'conversion_factor' => $lineItem['conversion_factor'],
+                    'unit_price' => $lineItem['unit_price'],
+                    'sale_price' => $lineItem['sale_price'],
                 ]);
+            }
 
-                Product::where('id', $EachProduct['product_id'])
-                    ->where('user_id', $user_id)
-                    ->decrement('unit', $qty);
+            foreach ($stockRequirements as $productId => $requiredStock) {
+                $product = $lockedProducts[$productId];
+                $remainingStock = round((float) $product->stock_base - $requiredStock, 3);
+
+                $product->update([
+                    'stock_base' => $remainingStock,
+                    // Kolom lama dipertahankan sebagai salinan stok dasar.
+                    'unit' => $this->formatQty($remainingStock),
+                ]);
             }
 
             DB::commit();
@@ -139,35 +180,43 @@ class InvoiceController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Transaksi berhasil dibuat.',
-                'invoice_number' => $invoice->invoice_number
+                'invoice_number' => $invoice->invoice_number,
             ]);
-        } catch (Exception $e) {
+        } catch (RuntimeException $exception) {
             DB::rollBack();
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Terjadi kesalahan saat membuat transaksi.'
-            ]);
+                'message' => $exception->getMessage(),
+            ], 422);
+        } catch (Throwable $exception) {
+            DB::rollBack();
+            report($exception);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat membuat transaksi.',
+            ], 500);
         }
     }
 
-    function invoiceSelect(Request $request)
+    public function invoiceSelect(Request $request)
     {
-        $user_id = $request->header('id');
+        $userId = (int) $request->header('id');
 
-        return Invoice::where('user_id', $user_id)
+        return Invoice::where('user_id', $userId)
             ->with('customer')
-            ->orderBy('id', 'desc')
+            ->orderByDesc('id')
             ->get();
     }
 
-    function topCustomers(Request $request)
+    public function topCustomers(Request $request)
     {
-        $user_id = $request->header('id');
+        $userId = (int) $request->header('id');
 
-        return Customer::where('customers.user_id', $user_id)
+        return Customer::where('customers.user_id', $userId)
             ->join('invoices', 'customers.id', '=', 'invoices.customer_id')
-            ->where('invoices.user_id', $user_id)
+            ->where('invoices.user_id', $userId)
             ->select(
                 'customers.id',
                 'customers.name',
@@ -181,49 +230,54 @@ class InvoiceController extends Controller
             ->get();
     }
 
-    function topProducts(Request $request)
+    public function topProducts(Request $request)
     {
-        $user_id = $request->header('id');
+        $userId = (int) $request->header('id');
 
-        return Product::where('products.user_id', $user_id)
+        return Product::where('products.user_id', $userId)
             ->join('invoice_products', 'products.id', '=', 'invoice_products.product_id')
-            ->where('invoice_products.user_id', $user_id)
+            ->where('invoice_products.user_id', $userId)
             ->select(
                 'products.id',
                 'products.name',
-                'products.price',
-                'products.unit',
-                DB::raw('SUM(invoice_products.qty) as total_qty'),
+                'products.base_unit',
+                'products.stock_base',
+                DB::raw('SUM(invoice_products.qty * invoice_products.conversion_factor) as total_base_qty'),
                 DB::raw('COUNT(DISTINCT invoice_products.invoice_id) as total_transactions'),
                 DB::raw('COALESCE(SUM(invoice_products.sale_price), 0) as total_sales')
             )
-            ->groupBy('products.id', 'products.name', 'products.price', 'products.unit')
-            ->orderByDesc('total_qty')
+            ->groupBy('products.id', 'products.name', 'products.base_unit', 'products.stock_base')
+            ->orderByDesc('total_base_qty')
             ->orderByDesc('total_sales')
             ->get();
     }
 
-    function InvoiceDetails(Request $request)
+    public function InvoiceDetails(Request $request)
     {
-        $user_id = $request->header('id');
+        $userId = (int) $request->header('id');
 
-        $customerDetails = Customer::where('user_id', $user_id)
+        $customerDetails = Customer::where('user_id', $userId)
             ->where('id', $request->input('cus_id'))
             ->first();
 
-        $invoiceTotal = Invoice::where('user_id', $user_id)
+        $invoiceTotal = Invoice::where('user_id', $userId)
             ->where('id', $request->input('inv_id'))
             ->first();
 
-        $invoiceProduct = InvoiceProduct::where('invoice_id', $request->input('inv_id'))
-            ->where('user_id', $user_id)
-            ->with('product')
+        $invoiceProducts = InvoiceProduct::where('invoice_id', $request->input('inv_id'))
+            ->where('user_id', $userId)
+            ->with(['product', 'productUnit'])
             ->get();
 
-        return array(
+        return response()->json([
             'customer' => $customerDetails,
             'invoice' => $invoiceTotal,
-            'product' => $invoiceProduct,
-        );
+            'product' => $invoiceProducts,
+        ]);
+    }
+
+    private function formatQty(float $qty): string
+    {
+        return rtrim(rtrim(number_format($qty, 3, '.', ''), '0'), '.');
     }
 }
